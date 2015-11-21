@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -12,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.BatteryManager;
 import android.os.Bundle;
@@ -34,7 +34,10 @@ import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
+import com.marcouberti.f35watchface.utils.moonphase.MoonPhase;
 import com.marcouberti.f35watchface.utils.ScreenUtils;
+import com.marcouberti.f35watchface.utils.moonphase.Phase;
+import com.marcouberti.f35watchface.utils.moonphase.StarDate;
 
 import java.lang.ref.WeakReference;
 import java.text.DateFormatSymbols;
@@ -87,8 +90,11 @@ public class F35Face extends CanvasWatchFaceService {
         Bitmap bg;
         Paint mHandPaint;
         Paint mBackgroundPaint;
-        Paint mSecondsCirclePaint,mComplicationPaint;
-        Paint blackFillPaint, whiteFillPaint;
+        Paint mSecondsCirclePaint, smallTextPaint;
+        Paint logoTextPaint;
+        Paint blackFillPaint, whiteFillPaint, darkGrayFillPaint;
+        Paint accentFillPaint;
+        Paint largeTextPaint, mediumTextPaint;
         boolean mAmbient;
         boolean nightMode = false;
         Calendar mCalendar;
@@ -177,12 +183,38 @@ public class F35Face extends CanvasWatchFaceService {
             mSecondsCirclePaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 3f));
             //mSecondsCirclePaint.setShadowLayer(2, 0, 0, Color.BLACK);
 
-            mComplicationPaint= new Paint();
-            mComplicationPaint.setAntiAlias(true);
-            mComplicationPaint.setTextAlign(Paint.Align.CENTER);
-            mComplicationPaint.setColor(getResources().getColor(R.color.white));
-            mComplicationPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
-            mComplicationPaint.setTextSize(getResources().getDimension(R.dimen.font_size_string));
+            smallTextPaint = new Paint();
+            smallTextPaint.setAntiAlias(true);
+            smallTextPaint.setTextAlign(Paint.Align.CENTER);
+            smallTextPaint.setColor(getResources().getColor(R.color.white));
+            smallTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita Heavy Bold.ttf"));
+            smallTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_small));
+
+            largeTextPaint = new Paint();
+            largeTextPaint.setAntiAlias(true);
+            largeTextPaint.setTextAlign(Paint.Align.CENTER);
+            largeTextPaint.setColor(getResources().getColor(R.color.white));
+            largeTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
+            largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large));
+
+            mediumTextPaint = new Paint();
+            mediumTextPaint.setAntiAlias(true);
+            mediumTextPaint.setTextAlign(Paint.Align.CENTER);
+            mediumTextPaint.setColor(getResources().getColor(R.color.white));
+            mediumTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
+            mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium));
+
+            accentFillPaint= new Paint();
+            accentFillPaint.setAntiAlias(true);
+            accentFillPaint.setTextAlign(Paint.Align.CENTER);
+            accentFillPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
+
+            logoTextPaint= new Paint();
+            logoTextPaint.setAntiAlias(true);
+            logoTextPaint.setTextAlign(Paint.Align.CENTER);
+            logoTextPaint.setColor(getResources().getColor(R.color.white));
+            logoTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/square_sans_serif_7.ttf"));
+            logoTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_logo_text));
 
             mHandPaint= new Paint();
             mHandPaint.setAntiAlias(true);
@@ -200,6 +232,12 @@ public class F35Face extends CanvasWatchFaceService {
             whiteFillPaint.setStyle(Paint.Style.FILL);
             whiteFillPaint.setAntiAlias(true);
             whiteFillPaint.setFilterBitmap(true);
+
+            darkGrayFillPaint = new Paint();
+            darkGrayFillPaint.setColor(Color.DKGRAY);
+            darkGrayFillPaint.setStyle(Paint.Style.FILL);
+            darkGrayFillPaint.setAntiAlias(true);
+            darkGrayFillPaint.setFilterBitmap(true);
 
             mTime = new Time();
             mCalendar = Calendar.getInstance();
@@ -245,6 +283,7 @@ public class F35Face extends CanvasWatchFaceService {
         public void onDraw(Canvas canvas, Rect bounds) {
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
+            accentFillPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
 
             int width = bounds.width();
             int height = bounds.height();
@@ -270,6 +309,13 @@ public class F35Face extends CanvasWatchFaceService {
                 //BLACK BG TO SAVE ENERGY
                 canvas.drawColor(Color.BLACK);
             }
+
+            //Accent triangle
+            drawTopTriangle(canvas, width,height);
+
+            //LOGO TEXT
+            drawTextLogo(canvas, width, height);
+            //END LOGO TEXT
 
             //COMPLICATIONS
             if(!mAmbient) {
@@ -297,8 +343,7 @@ public class F35Face extends CanvasWatchFaceService {
             canvas.rotate(hoursRotation, width / 2, width / 2);
             canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mSecondsCirclePaint);
             canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.35F, width / 2 + RRradius, height / 2f * 4f / 5f, RR, RR, mSecondsCirclePaint);
-            mHandPaint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(width/2, (height / 2F) * 0.39F, ScreenUtils.convertDpToPixels(getApplicationContext(), 3F),mHandPaint);
+            canvas.drawCircle(width/2, (height / 2F) * 0.39F, ScreenUtils.convertDpToPixels(getApplicationContext(), 3F),accentFillPaint);
             canvas.restore();
             //END Hours hand
 
@@ -309,66 +354,171 @@ public class F35Face extends CanvasWatchFaceService {
             if(!mAmbient) {
                 canvas.save();
                 canvas.rotate(secondsRotation, width / 2, width / 2);
-                mHandPaint.setStyle(Paint.Style.STROKE);
-                canvas.drawLine(width / 2, height / 2 + (height / 15) * 2f, width / 2, (height / 25), mHandPaint);
+                accentFillPaint.setStyle(Paint.Style.STROKE);
+                canvas.drawLine(width / 2, height / 2 + (height / 15) * 2f, width / 2, (height / 25), accentFillPaint);
+                accentFillPaint.setStyle(Paint.Style.FILL);
                 canvas.restore();
             }
             //END seconds hand
 
             //Red center circle
             if(!mAmbient) {
-                mHandPaint.setStyle(Paint.Style.FILL);
-                canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), mHandPaint);
+                canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), accentFillPaint);
             }else {
-                mHandPaint.setStyle(Paint.Style.FILL);
                 canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), blackFillPaint);
             }
+
+            drawTopTriangle(canvas, width,height);
         }
 
         private void drawLeftComplication(Canvas canvas, int width, int height) {
-            drawMonthAndYear(canvas, width, height);
+            float LX = width*0.36f;
+            float LY = height*0.64f;
+            drawMoonPhase(canvas, width, height, LX, LY);
         }
 
         private void drawRightComplication(Canvas canvas, int width, int height) {
-            drawWeekDays(canvas, width, height);
-        }
-
-        private void drawWeekDays(Canvas canvas, int width, int height) {
             float RX = height*0.64f;
             float RY = height*0.64f;
+            drawWeekDays(canvas, width, height, RX, RY);
+        }
+
+        private void drawWeekDays(Canvas canvas, int width, int height,  float CX, float CY) {
             float CR = width/8.5f;
             String[] days =getWeekDaysSymbols();
             Path rPath = new Path();
-            rPath.addCircle(RX, RY, CR * 0.7f, Path.Direction.CW);
+            rPath.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
             for(int i=0; i<days.length; i++) {
 
                 if(days[i] == null || days[i].equalsIgnoreCase("")) continue;
 
                 canvas.save();
-                canvas.rotate(i * 51.4f, RX, RY);
+                canvas.rotate(i * 51.4f, CX, CY);
                 if(days[i].toUpperCase().equalsIgnoreCase(getWeekDay())) {
-                    mComplicationPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
+                    smallTextPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 }else {
-                    mComplicationPaint.setColor(Color.WHITE);
+                    smallTextPaint.setColor(Color.WHITE);
                 }
-                canvas.drawTextOnPath(days[i].toUpperCase(), rPath, 0, 0, mComplicationPaint);
-                mComplicationPaint.setColor(Color.WHITE);
+                canvas.drawTextOnPath(days[i].toUpperCase(), rPath, 0, 0, smallTextPaint);
+                smallTextPaint.setColor(Color.WHITE);
                 canvas.restore();
             }
+
+            String dayNumber = getDayNumber();
+            Rect bounds = new Rect();
+            mediumTextPaint.getTextBounds(dayNumber, 0, dayNumber.length(), bounds);
+            canvas.drawText(dayNumber, CX, CY + bounds.height() / 2, mediumTextPaint);
         }
 
-        private void drawMonthAndYear(Canvas canvas, int width, int height) {
-            float LX = width*0.36f;
-            float LY = height*0.64f;
+        private void drawMonthAndDay(Canvas canvas, int width, int height, float CX, float CY) {
             float CR = width/8.5f;
             //left bottom
             //canvas.drawCircle(LX, LY, CR, mSecondsCirclePaint);
             canvas.save();
-            canvas.rotate(90, LX, LY);
+            canvas.rotate(90, CX, CY);
             Path path = new Path();
-            path.addCircle(LX, LY, CR * 0.7f, Path.Direction.CW);
-            canvas.drawTextOnPath("TEMPERATURE", path, 0, 0, mComplicationPaint);
+            path.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
+            canvas.drawTextOnPath(getMonthExtended(), path, 0, 0, smallTextPaint);
             canvas.restore();
+
+            String dayNumber = getDayNumber();
+            Rect bounds = new Rect();
+            largeTextPaint.getTextBounds(dayNumber, 0, dayNumber.length(), bounds);
+            canvas.drawText(dayNumber,CX,CY+bounds.height()/2, largeTextPaint);
+        }
+
+        private void drawMoonPhase(Canvas canvas, int W, int H, float CX, float CY) {
+            float CR = W/8.5f;
+            //left bottom
+            //canvas.drawCircle(LX, LY, CR, mSecondsCirclePaint);
+            canvas.save();
+            canvas.rotate(90, CX, CY);
+            Path path = new Path();
+            path.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
+            canvas.drawTextOnPath("MOON PHASE", path, 0, 0, smallTextPaint);
+            canvas.restore();
+
+            //DRAW MOON
+            // Create new each time so it is update on every redraw.
+            StarDate date = new StarDate();
+
+            int width = (int)CR;
+            int height = (int)CR;
+            double phaseAngle = new MoonPhase().getPhaseAngle(date);
+
+            int xcenter = (int)CX;
+            int ycenter = (int)CY;
+
+            int moonradius= (int) (Math.min(width, height) * .4);
+            // draw the whole moon disk, in moonColor:
+            RectF oval = new RectF();
+            oval.set(xcenter - moonradius, ycenter - moonradius, xcenter
+                    + moonradius, ycenter + moonradius);
+            canvas.drawOval(oval, whiteFillPaint);
+
+
+            /* The phase angle is the angle sun-moon-earth,
+             so 0 = full phase, 180 = new.
+             What we're actually interested in for drawing purposes
+             is the position angle of the sunrise terminator,
+             which runs the opposite direction from the phase angle,
+             so we have to convert. */
+            double positionAngle = Math.PI - phaseAngle;
+            if (positionAngle < 0.)
+                positionAngle += 2. * Math.PI;
+
+            // Okay, now fill in the dark part.
+
+            double cosTerm = Math.cos(positionAngle);
+            //if (cosTerm < 0) cosTerm = -cosTerm;
+            moonradius+=1;//FIX WHITE BEHIND EDGES
+            double rsquared = moonradius * moonradius;
+            int whichQuarter = ((int) (positionAngle * 2. / Math.PI) + 4) % 4;
+            int j;
+
+            for (j = 0; j <= moonradius; ++j) {
+                double rrf = Math.sqrt(rsquared - j * j);
+                int rr = (int) (rrf + .5);
+                int xx = (int) (rrf * cosTerm);
+                int x1 = xcenter - (whichQuarter < 2 ? rr : xx);
+                int w = rr + xx + 1;
+                canvas.drawRect(x1, ycenter - j, w + x1, ycenter - j + 1, darkGrayFillPaint);
+                canvas.drawRect(x1, ycenter + j, w + x1, ycenter + j + 1, darkGrayFillPaint);
+            }
+            //END DRAW MOON
+        }
+
+        private void drawMonthAndYear(Canvas canvas, int width, int height, float CX, float CY) {
+            float CR = width/8.5f;
+            //left bottom
+            //canvas.drawCircle(LX, LY, CR, mSecondsCirclePaint);
+            canvas.save();
+            canvas.rotate(90, CX, CY);
+            Path path = new Path();
+            path.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
+            canvas.drawTextOnPath(getMonthExtended(), path, 0, 0, smallTextPaint);
+            canvas.restore();
+
+            String year = getYear();
+            Rect bounds = new Rect();
+            largeTextPaint.getTextBounds(year, 0, year.length(), bounds);
+            canvas.drawText(year,CX,CY+bounds.height()/2, mediumTextPaint);
+        }
+
+        private void drawTopTriangle(Canvas canvas, int width, int height) {
+            int TS = ScreenUtils.convertDpToPixels(getApplicationContext(),5);
+            Path minutesPath = new Path();
+            minutesPath.moveTo((width / 2), (height / 2) * 0.3f);
+            minutesPath.lineTo((width / 2) - TS, (height / 2) * 0.3f - TS * 1.5F);
+            minutesPath.lineTo((width / 2)+TS , (height / 2) * 0.3f -TS * 1.5F);
+            minutesPath.lineTo((width / 2), (height / 2) * 0.3f);
+            minutesPath.close();
+            canvas.drawPath(minutesPath, accentFillPaint);
+        }
+
+        private void drawTextLogo(Canvas canvas, int width, int height) {
+            //TODO leggere da data layer
+            canvas.drawText("F-35 LIGHTNING II", width/2, (height/2)*0.75f, logoTextPaint);
         }
 
         private String[] getWeekDaysSymbols(){
@@ -378,7 +528,6 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private String getWeekDay() {
-            mBackgroundPaint.setTextSize(getResources().getDimension(R.dimen.font_size_string));
             return new SimpleDateFormat("EEE").format(Calendar.getInstance().getTime()).toUpperCase();
         }
 
@@ -654,6 +803,10 @@ public class F35Face extends CanvasWatchFaceService {
 
     private String getMonth() {
         return new SimpleDateFormat("MMM").format(Calendar.getInstance().getTime()).toUpperCase();
+    }
+
+    private String getMonthExtended() {
+        return new SimpleDateFormat("MMMM").format(Calendar.getInstance().getTime()).toUpperCase();
     }
 
     private String getDayNumber() {
