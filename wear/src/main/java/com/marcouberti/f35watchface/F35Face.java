@@ -36,7 +36,6 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
 import com.marcouberti.f35watchface.utils.moonphase.MoonPhase;
 import com.marcouberti.f35watchface.utils.ScreenUtils;
-import com.marcouberti.f35watchface.utils.moonphase.Phase;
 import com.marcouberti.f35watchface.utils.moonphase.StarDate;
 
 import java.lang.ref.WeakReference;
@@ -486,6 +485,16 @@ public class F35Face extends CanvasWatchFaceService {
                 canvas.drawRect(x1, ycenter + j, w + x1, ycenter + j + 1, darkGrayFillPaint);
             }
             //END DRAW MOON
+
+            //Draw moon age
+            com.marcouberti.f35watchface.utils.moonage.MoonPhase moonAge = new com.marcouberti.f35watchface.utils.moonage.MoonPhase(Calendar.getInstance());
+            moonAge.getPhase();
+            String age = moonAge.getMoonAgeAsDays();
+
+            canvas.save();
+            canvas.rotate(-90, CX, CY);
+            canvas.drawTextOnPath(age, path, 0, 0, smallTextPaint);
+            canvas.restore();
         }
 
         private void drawMonthAndYear(Canvas canvas, int width, int height, float CX, float CY) {
