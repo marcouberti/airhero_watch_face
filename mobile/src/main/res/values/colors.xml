@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="digital_background">#000000</color>
+    <color name="digital_text">#ffffff</color>
+    <color name="color_primary">#3F51B5</color>
+    <color name="color_primary_dark">#303F9F</color>
+    <color name="color_accent">#E91E63</color>
+    <color name="config_activity_background">#ffffff</color>
+    <color name="config_activity_header_text_color">#ffffff</color>
+    <color name="color_item_label_color">#ffffff</color>
+    <color name="color_item_circle_border_color">#424242</color>
+    <color name="dark_gray">#4d4d4d</color>
+    <!--AURORA-->
+    <color name="col_1">#FF3399</color>
+    <color name="col_2">#6666FF</color>
+
+    <!--FIRE-->
+    <color name="col_3">#f3d700</color>
+    <color name="col_4">#FF003D</color>
+
+    <!--ACQUA-->
+    <color name="col_5">#1D976C</color>
+
+    <!-- FOREST -->
+    <color name="col_6">#afef00</color>
+
+    <!-- TROPICAL PARADISE -->
+    <color name="col_7">#00C9FF</color>
+    <color name="col_8">#92FE9D</color>
+
+
+    <!-- Violet illusion -->
+    <color name="col_9">#fc00ff</color>
+
+
+    <!-- Fruit flavour -->
+    <color name="col_10">#ff0080</color>
+
+    <!-- Summer -->
+    <color name="col_11">#f30f58</color>
+    <color name="col_12">#07e2a7</color>
+
+
+    <!-- Terra -->
+    <color name="col_13">#530A15</color>
+    <color name="col_14">#E07F15</color>
+
+    <!-- Sunflower -->
+    <color name="col_15">#FAFF89</color>
+    <color name="col_16">#FEB60A</color>
+
+    <color name="col_17">#8E9FBD</color>
+
+
+    <!-- Passion -->
+    <color name="col_18">#c2000f</color>
+    <color name="col_19">#750047</color>
+
+
+    <color name="col_20">#1B589C</color>
+
+    <color name="col_21">#67A124</color>
+
+
+    <color name="col_22">#AD0AAB</color>
+
+
+
+    <color name="col_23">#b6ff00</color>
+</resources>
