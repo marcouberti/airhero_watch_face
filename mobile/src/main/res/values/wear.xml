@@ -1,0 +1,5 @@
+<resources>
+    <string-array name="android_wear_capabilities">
+        <item>f35_wearable_capability</item>
+    </string-array>
+</resources>

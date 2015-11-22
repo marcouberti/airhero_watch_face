@@ -14,9 +14,11 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.wearable.activity.ConfirmationActivity;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
@@ -24,16 +26,26 @@ import android.text.format.Time;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.wearable.CapabilityApi;
+import com.google.android.gms.wearable.CapabilityInfo;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
+import com.google.android.gms.wearable.WearableStatusCodes;
 import com.marcouberti.f35watchface.utils.moonphase.MoonPhase;
 import com.marcouberti.f35watchface.utils.ScreenUtils;
 import com.marcouberti.f35watchface.utils.moonphase.StarDate;
@@ -42,6 +54,7 @@ import java.lang.ref.WeakReference;
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Set;
 import java.util.TimeZone;
 
 /**
@@ -51,6 +64,10 @@ import java.util.TimeZone;
 public class F35Face extends CanvasWatchFaceService {
 
     private static final String TAG = "NatureGradientsFace";
+
+    private static final String F35_WEARABLE_CAPABILITY_NAME = "f35_wearable_capability";
+    private static final String LAST_KNOW_GPS_POSITION = "/gps_position";
+    private String phoneNodeId = null;
 
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
@@ -84,7 +101,7 @@ public class F35Face extends CanvasWatchFaceService {
     }
 
     private class Engine extends CanvasWatchFaceService.Engine implements DataApi.DataListener,
-            GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
+            GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,  MessageApi.MessageListener{
 
         Bitmap bg;
         Paint mHandPaint;
@@ -143,6 +160,9 @@ public class F35Face extends CanvasWatchFaceService {
                     //detect screen area (CENTER_LEFT, CENTER_RIGHT, BOTTOM_CENTER)
                     handleTouch(x,y);
                     invalidate();
+
+                    //TODO REMOVE
+                    fireMessage(LAST_KNOW_GPS_POSITION);
                     break;
 
                 case WatchFaceService.TAP_TYPE_TOUCH:
@@ -423,7 +443,7 @@ public class F35Face extends CanvasWatchFaceService {
             String dayNumber = getDayNumber();
             Rect bounds = new Rect();
             largeTextPaint.getTextBounds(dayNumber, 0, dayNumber.length(), bounds);
-            canvas.drawText(dayNumber,CX,CY+bounds.height()/2, largeTextPaint);
+            canvas.drawText(dayNumber, CX, CY + bounds.height() / 2, largeTextPaint);
         }
 
         private void drawMoonPhase(Canvas canvas, int W, int H, float CX, float CY) {
@@ -519,7 +539,7 @@ public class F35Face extends CanvasWatchFaceService {
             Path minutesPath = new Path();
             minutesPath.moveTo((width / 2), (height / 2) * 0.3f);
             minutesPath.lineTo((width / 2) - TS, (height / 2) * 0.3f - TS * 1.5F);
-            minutesPath.lineTo((width / 2)+TS , (height / 2) * 0.3f -TS * 1.5F);
+            minutesPath.lineTo((width / 2) + TS, (height / 2) * 0.3f - TS * 1.5F);
             minutesPath.lineTo((width / 2), (height / 2) * 0.3f);
             minutesPath.close();
             canvas.drawPath(minutesPath, accentFillPaint);
@@ -527,7 +547,7 @@ public class F35Face extends CanvasWatchFaceService {
 
         private void drawTextLogo(Canvas canvas, int width, int height) {
             //TODO leggere da data layer
-            canvas.drawText("F-35 LIGHTNING II", width/2, (height/2)*0.75f, logoTextPaint);
+            canvas.drawText("F-35 LIGHTNING II", width / 2, (height / 2) * 0.75f, logoTextPaint);
         }
 
         private String[] getWeekDaysSymbols(){
@@ -546,8 +566,14 @@ public class F35Face extends CanvasWatchFaceService {
 
             if (visible) {
                 mGoogleApiClient.connect();
+                Wearable.MessageApi.addListener(mGoogleApiClient, this);
                 registerReceiver();
-
+                new Thread() {
+                    @Override
+                    public void run() {
+                        setupF35Wearable();
+                    }
+                }.start();
                 // Update time zone in case it changed while we weren't visible.
                 mTime.clear(TimeZone.getDefault().getID());
                 mTime.setToNow();
@@ -555,6 +581,7 @@ public class F35Face extends CanvasWatchFaceService {
                 unregisterReceiver();
                 if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
                     Wearable.DataApi.removeListener(mGoogleApiClient, this);
+                    Wearable.MessageApi.removeListener(mGoogleApiClient, this);
                     mGoogleApiClient.disconnect();
                 }
             }
@@ -562,6 +589,70 @@ public class F35Face extends CanvasWatchFaceService {
             // Whether the timer should be running depends on whether we're visible (as well as
             // whether we're in ambient mode), so we may need to start or stop the timer.
             updateTimer();
+        }
+
+        private void setupF35Wearable() {
+            CapabilityApi.GetCapabilityResult result =
+                    Wearable.CapabilityApi.getCapability(
+                            mGoogleApiClient, F35_WEARABLE_CAPABILITY_NAME,
+                            CapabilityApi.FILTER_REACHABLE).await();
+
+            updateTranscriptionCapability(result.getCapability());
+
+            //setupComplete(); we can fire messages
+
+            CapabilityApi.CapabilityListener capabilityListener =
+                    new CapabilityApi.CapabilityListener() {
+                        @Override
+                        public void onCapabilityChanged(CapabilityInfo capabilityInfo) {
+                            updateTranscriptionCapability(capabilityInfo);
+                        }
+                    };
+
+            Wearable.CapabilityApi.addCapabilityListener(
+                    mGoogleApiClient,
+                    capabilityListener,
+                    F35_WEARABLE_CAPABILITY_NAME);
+        }
+
+        private void updateTranscriptionCapability(CapabilityInfo capabilityInfo) {
+            Set<Node> connectedNodes = capabilityInfo.getNodes();
+            phoneNodeId = pickBestNodeId(connectedNodes);
+        }
+
+        private String pickBestNodeId(Set<Node> nodes) {
+            String bestNodeId = null;
+            // Find a nearby node or pick one arbitrarily
+            for (Node node : nodes) {
+                if (node.isNearby()) {
+                    return node.getId();
+                }
+                bestNodeId = node.getId();
+            }
+            return bestNodeId;
+        }
+
+        protected void fireMessage(final String command) {
+            if (phoneNodeId == null) {
+                //bad, we cannot send message
+            } else {
+                //fire the message to the first connected node in list
+                Log.d(TAG, "Sending message to Node with ID: " + phoneNodeId);
+
+                PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage(mGoogleApiClient, phoneNodeId, command, null);
+                messageResult.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
+                    @Override
+                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                        Status status = sendMessageResult.getStatus();
+                        Log.d(TAG, "Status: " + status.toString());
+                        if (status.getStatusCode() != WearableStatusCodes.SUCCESS) {
+                            Log.e(TAG,"Something go wrong during sending command... "+command);
+                        } else {
+                            Log.d(TAG,"Message sent successfully to node. "+command);
+                        }
+                    }
+                });
+            }
         }
 
         private void registerReceiver() {
@@ -727,6 +818,16 @@ public class F35Face extends CanvasWatchFaceService {
         public void onConnectionFailed(ConnectionResult result) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "onConnectionFailed: " + result);
+            }
+        }
+
+        @Override
+        public void onMessageReceived(MessageEvent messageEvent) {
+            Log.v("WEAR", "In onMessageReceived()");
+
+            if (messageEvent.getPath().contains(LAST_KNOW_GPS_POSITION)) {
+                Log.d(TAG,"Received message "+LAST_KNOW_GPS_POSITION+ " "+new String(messageEvent.getData()));
+            }else {
             }
         }
     }

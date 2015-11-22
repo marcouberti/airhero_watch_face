@@ -264,12 +264,14 @@ public class WatchFaceCompanionConfigActivity extends Activity
             if (!config.containsKey(configKey)) {
                 continue;
             }
-            int color = config.getInt(configKey);
-            Log.d(TAG, "Found watch face config key: " + configKey + " -> "
+            if(configKey.equalsIgnoreCase(WatchFaceUtil.KEY_BACKGROUND_COLOR)) {
+                int color = config.getInt(configKey);
+                Log.d(TAG, "Found watch face config key: " + configKey + " -> "
                         + color);
 
-            if (updateUiForKey(configKey, color)) {
-                uiUpdated = true;
+                if (updateUiForKey(configKey, color)) {
+                    uiUpdated = true;
+                }
             }
         }
     }
