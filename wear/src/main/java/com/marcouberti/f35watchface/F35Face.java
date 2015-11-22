@@ -52,6 +52,7 @@ import com.marcouberti.f35watchface.utils.moonphase.StarDate;
 
 import java.lang.ref.WeakReference;
 import java.text.DateFormatSymbols;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Set;
@@ -94,6 +95,7 @@ public class F35Face extends CanvasWatchFaceService {
     private int RIGHT_COMPLICATION_MODE = DAY_NUMBER;
 
     int selectedColorCode;
+    String lastKnowCoordinates = "-- / --";
 
     @Override
     public Engine onCreateEngine() {
@@ -160,9 +162,6 @@ public class F35Face extends CanvasWatchFaceService {
                     //detect screen area (CENTER_LEFT, CENTER_RIGHT, BOTTOM_CENTER)
                     handleTouch(x,y);
                     invalidate();
-
-                    //TODO REMOVE
-                    fireMessage(LAST_KNOW_GPS_POSITION);
                     break;
 
                 case WatchFaceService.TAP_TYPE_TOUCH:
@@ -353,7 +352,7 @@ public class F35Face extends CanvasWatchFaceService {
             canvas.save();
             canvas.rotate(minutesRotation, width / 2, width / 2);
             canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.20F, mSecondsCirclePaint);
-            canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.20F, width / 2 + RRradius, height / 2f * 4f / 5f, RR, RR, mSecondsCirclePaint);
+            canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.20F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
             canvas.restore();
             //END Minutes hands
 
@@ -361,7 +360,7 @@ public class F35Face extends CanvasWatchFaceService {
             canvas.save();
             canvas.rotate(hoursRotation, width / 2, width / 2);
             canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mSecondsCirclePaint);
-            canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.35F, width / 2 + RRradius, height / 2f * 4f / 5f, RR, RR, mSecondsCirclePaint);
+            canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.35F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
             canvas.drawCircle(width/2, (height / 2F) * 0.39F, ScreenUtils.convertDpToPixels(getApplicationContext(), 3F),accentFillPaint);
             canvas.restore();
             //END Hours hand
@@ -393,7 +392,8 @@ public class F35Face extends CanvasWatchFaceService {
         private void drawLeftComplication(Canvas canvas, int width, int height) {
             float LX = width*0.36f;
             float LY = height*0.64f;
-            drawMoonPhase(canvas, width, height, LX, LY);
+            drawCoordinates(canvas, width, height, LX, LY);
+            //drawMoonPhase(canvas, width, height, LX, LY);
         }
 
         private void drawRightComplication(Canvas canvas, int width, int height) {
@@ -427,6 +427,29 @@ public class F35Face extends CanvasWatchFaceService {
             Rect bounds = new Rect();
             mediumTextPaint.getTextBounds(dayNumber, 0, dayNumber.length(), bounds);
             canvas.drawText(dayNumber, CX, CY + bounds.height() / 2, mediumTextPaint);
+        }
+
+        long lastLocationTs = -1;
+        private void drawCoordinates(Canvas canvas, int width, int height,  float CX, float CY) {
+            long now = System.currentTimeMillis();
+            //phone message only every 5min at least
+            if(lastLocationTs == -1 || now - lastLocationTs > 60000*5) {
+                fireMessage(LAST_KNOW_GPS_POSITION);
+            }
+
+            //draw
+            float CR = width/8.5f;
+            canvas.save();
+            canvas.rotate(90, CX, CY);
+            Path path = new Path();
+            path.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
+            canvas.drawTextOnPath("LATITUDE AND LONGITUDE", path, 0, 0, smallTextPaint);
+            canvas.restore();
+
+            String coord = lastKnowCoordinates;
+            Rect bounds = new Rect();
+            smallTextPaint.getTextBounds(coord, 0, coord.length(), bounds);
+            canvas.drawText(coord, CX, CY + bounds.height() / 2, smallTextPaint);
         }
 
         private void drawMonthAndDay(Canvas canvas, int width, int height, float CX, float CY) {
@@ -546,8 +569,7 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void drawTextLogo(Canvas canvas, int width, int height) {
-            //TODO leggere da data layer
-            canvas.drawText("F-35 LIGHTNING II", width / 2, (height / 2) * 0.75f, logoTextPaint);
+            canvas.drawText("F-35", width / 2, (height / 2) * 0.80f, logoTextPaint);
         }
 
         private String[] getWeekDaysSymbols(){
@@ -826,7 +848,13 @@ public class F35Face extends CanvasWatchFaceService {
             Log.v("WEAR", "In onMessageReceived()");
 
             if (messageEvent.getPath().contains(LAST_KNOW_GPS_POSITION)) {
-                Log.d(TAG,"Received message "+LAST_KNOW_GPS_POSITION+ " "+new String(messageEvent.getData()));
+                try {
+                    Log.d(TAG, "Received message " + LAST_KNOW_GPS_POSITION + " " + new String(messageEvent.getData()));
+                    String rawData = new String(messageEvent.getData());
+                    String[] parts = rawData.split("_");
+                    lastKnowCoordinates = String.format("%.2f", Double.parseDouble(parts[0])) + " / " + String.format("%.2f", Double.parseDouble(parts[1]));
+                    lastLocationTs = System.currentTimeMillis();
+                }catch (Exception e) {Log.e(TAG,"Exception",e);}
             }else {
             }
         }

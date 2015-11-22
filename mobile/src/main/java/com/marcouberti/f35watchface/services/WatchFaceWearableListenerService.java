@@ -58,7 +58,7 @@ public class WatchFaceWearableListenerService extends WearableListenerService {
                         // Or use LocationManager.GPS_PROVIDER
                         Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
                         if(lastKnownLocation != null) {
-                            reply(LAST_KNOW_GPS_POSITION, lastKnownLocation.getLatitude() + "_" + lastKnownLocation.getLongitude() + "_" + lastKnownLocation.getAltitude());
+                            reply(LAST_KNOW_GPS_POSITION, lastKnownLocation.getLatitude() + "_" + lastKnownLocation.getLongitude());
                         }
                     }catch (Exception e){e.printStackTrace();}
                 }
