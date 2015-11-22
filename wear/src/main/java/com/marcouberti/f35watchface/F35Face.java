@@ -95,7 +95,7 @@ public class F35Face extends CanvasWatchFaceService {
     private int RIGHT_COMPLICATION_MODE = DAY_NUMBER;
 
     int selectedColorCode;
-    String lastKnowCoordinates = "-- / --";
+    String lastKnowCoordinates = "0.00 / 0.00";
 
     @Override
     public Engine onCreateEngine() {
@@ -112,7 +112,7 @@ public class F35Face extends CanvasWatchFaceService {
         Paint logoTextPaint;
         Paint blackFillPaint, whiteFillPaint, darkGrayFillPaint;
         Paint accentFillPaint;
-        Paint largeTextPaint, mediumTextPaint;
+        Paint largeTextPaint, mediumTextPaint, normalTextPaint;
         boolean mAmbient;
         boolean nightMode = false;
         Calendar mCalendar;
@@ -221,6 +221,13 @@ public class F35Face extends CanvasWatchFaceService {
             mediumTextPaint.setColor(getResources().getColor(R.color.white));
             mediumTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
             mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium));
+
+            normalTextPaint = new Paint();
+            normalTextPaint.setAntiAlias(true);
+            normalTextPaint.setTextAlign(Paint.Align.CENTER);
+            normalTextPaint.setColor(getResources().getColor(R.color.white));
+            normalTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
+            normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
 
             accentFillPaint= new Paint();
             accentFillPaint.setAntiAlias(true);
@@ -447,9 +454,13 @@ public class F35Face extends CanvasWatchFaceService {
             canvas.restore();
 
             String coord = lastKnowCoordinates;
+            String[] parts = coord.split("/");
+            String lat = parts[0].trim();
+            String lon = parts[1].trim();
             Rect bounds = new Rect();
-            smallTextPaint.getTextBounds(coord, 0, coord.length(), bounds);
-            canvas.drawText(coord, CX, CY + bounds.height() / 2, smallTextPaint);
+            normalTextPaint.getTextBounds(lat, 0, lat.length(), bounds);
+            canvas.drawText(lat, CX, CY, normalTextPaint);
+            canvas.drawText(lon, CX, CY+bounds.height()+4, normalTextPaint);
         }
 
         private void drawMonthAndDay(Canvas canvas, int width, int height, float CX, float CY) {
