@@ -446,10 +446,11 @@ public class F35Face extends CanvasWatchFaceService {
             }
 
             //Battery level
-            //TODO
+            int batteryPercentage = getBatteryLevel();
+            int deg = batteryPercentage * 360 /100;
             canvas.save();
             canvas.rotate(-90, CX, CY);
-            canvas.drawArc(new RectF(CX - CR * 0.5f, CY - CR * 0.5f, CX + CR * 0.5f, CY + CR * 0.5f), 0, 270, false, complicationArcAccentPaint);
+            canvas.drawArc(new RectF(CX - CR * 0.5f, CY - CR * 0.5f, CX + CR * 0.5f, CY + CR * 0.5f), 0, deg, false, complicationArcAccentPaint);
             canvas.restore();
 
             //Day number
@@ -513,7 +514,7 @@ public class F35Face extends CanvasWatchFaceService {
             Rect bounds = new Rect();
             normalTextPaint.getTextBounds(chrono, 0, chrono.length(), bounds);
             canvas.drawText(chrono, CX, CY + bounds.height() / 2, normalTextPaint);
-            smallTextPaint.setColor(GradientsUtils.getGradients(getApplicationContext(),selectedColorCode));
+            smallTextPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
             canvas.drawText(millis, CX, CY + (bounds.height() / 2) * 3, smallTextPaint);
             smallTextPaint.setColor(Color.WHITE);
         }
