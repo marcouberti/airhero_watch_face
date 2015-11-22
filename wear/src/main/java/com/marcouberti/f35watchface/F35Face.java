@@ -113,7 +113,7 @@ public class F35Face extends CanvasWatchFaceService {
         Bitmap bg;
         Paint mHandPaint;
         Paint mBackgroundPaint;
-        Paint mSecondsCirclePaint, smallTextPaint;
+        Paint mSecondsCirclePaint,mDarkSecondsCirclePaint, smallTextPaint;
         Paint logoTextPaint;
         Paint blackFillPaint, whiteFillPaint, darkGrayFillPaint;
         Paint accentFillPaint;
@@ -205,7 +205,14 @@ public class F35Face extends CanvasWatchFaceService {
             mSecondsCirclePaint.setStyle(Paint.Style.FILL);
             mSecondsCirclePaint.setColor(Color.WHITE);
             mSecondsCirclePaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 3f));
-            //mSecondsCirclePaint.setShadowLayer(2, 0, 0, Color.BLACK);
+            mSecondsCirclePaint.setShadowLayer(2, 1, 1, Color.BLACK);
+
+            mDarkSecondsCirclePaint= new Paint();
+            mDarkSecondsCirclePaint.setAntiAlias(true);
+            mDarkSecondsCirclePaint.setStyle(Paint.Style.FILL);
+            mDarkSecondsCirclePaint.setColor(Color.DKGRAY);
+            mDarkSecondsCirclePaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 3f));
+            mDarkSecondsCirclePaint.setShadowLayer(2, 1, 1, Color.BLACK);
 
             smallTextPaint = new Paint();
             smallTextPaint.setAntiAlias(true);
@@ -373,7 +380,7 @@ public class F35Face extends CanvasWatchFaceService {
             //Minutes hand
             canvas.save();
             canvas.rotate(minutesRotation, width / 2, width / 2);
-            canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.20F, mSecondsCirclePaint);
+            canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.20F, mDarkSecondsCirclePaint);
             canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.20F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
             canvas.restore();
             //END Minutes hands
@@ -381,14 +388,14 @@ public class F35Face extends CanvasWatchFaceService {
             //Hours hand
             canvas.save();
             canvas.rotate(hoursRotation, width / 2, width / 2);
-            canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mSecondsCirclePaint);
+            canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mDarkSecondsCirclePaint);
             canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.35F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
             canvas.drawCircle(width/2, (height / 2F) * 0.39F, ScreenUtils.convertDpToPixels(getApplicationContext(), 3F),accentFillPaint);
             canvas.restore();
             //END Hours hand
 
             //Center circle
-            canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 6), mSecondsCirclePaint);
+            canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 6), mDarkSecondsCirclePaint);
 
             //Seconds hand
             if(!mAmbient) {
