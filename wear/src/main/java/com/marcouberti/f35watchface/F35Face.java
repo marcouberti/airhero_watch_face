@@ -86,16 +86,16 @@ public class F35Face extends CanvasWatchFaceService {
      */
     private static final int MSG_UPDATE_TIME = 0;
 
-    private static final int BATTERY = 0;
-    private static final int DAY_NUMBER = 1;
-    private static final int DAY_WEEK = 2;
-    private static final int MONTH = 3;
-    private static final int YEAR = 4;
-    private static final int NONE = 5;
+    private static final int CHRONO = 0;
+    private static final int WEEK_DAYS_BATTERY = 1;
+    private static final int COORDINATES = 2;
+    private static final int MONTH_AND_DAY = 3;
+    private static final int MONTH_AND_YEAR = 4;
+    private static final int MOON = 5;
 
-    private int BOTTOM_COMPLICATION_MODE = BATTERY;
-    private int LEFT_COMPLICATION_MODE = DAY_WEEK;
-    private int RIGHT_COMPLICATION_MODE = DAY_NUMBER;
+    //private int BOTTOM_COMPLICATION_MODE = BATTERY;
+    private int LEFT_COMPLICATION_MODE = MOON;
+    private int RIGHT_COMPLICATION_MODE = WEEK_DAYS_BATTERY;
 
     int selectedColorCode;
     String lastKnowCoordinates = "0.00 / 0.00";
@@ -111,6 +111,7 @@ public class F35Face extends CanvasWatchFaceService {
             GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,  MessageApi.MessageListener{
 
         Bitmap bg;
+        Bitmap hoursBitmap, minutesBitmap, secBitmap;
         Paint mHandPaint;
         Paint mBackgroundPaint;
         Paint mSecondsCirclePaint,mDarkSecondsCirclePaint, smallTextPaint;
@@ -124,6 +125,8 @@ public class F35Face extends CanvasWatchFaceService {
         Calendar mCalendar;
         Time mTime;
         boolean mIsRound =false;
+        float CR;
+        float handW,handH,handFactor;
 
         final Handler mUpdateTimeHandler = new EngineHandler(this);
 
@@ -195,6 +198,13 @@ public class F35Face extends CanvasWatchFaceService {
                     .build());
 
             bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
+            hoursBitmap= BitmapFactory.decodeResource(getResources(), R.drawable.hour_hand);
+            minutesBitmap= BitmapFactory.decodeResource(getResources(), R.drawable.minute_hand);
+            secBitmap= BitmapFactory.decodeResource(getResources(), R.drawable.sec_hand);
+
+            handH = hoursBitmap.getHeight();
+            handW = hoursBitmap.getWidth();
+            handFactor = handH/handW;
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setAntiAlias(true);
@@ -210,41 +220,42 @@ public class F35Face extends CanvasWatchFaceService {
             mDarkSecondsCirclePaint= new Paint();
             mDarkSecondsCirclePaint.setAntiAlias(true);
             mDarkSecondsCirclePaint.setStyle(Paint.Style.FILL);
-            mDarkSecondsCirclePaint.setColor(Color.DKGRAY);
+            mDarkSecondsCirclePaint.setColor(Color.WHITE);
             mDarkSecondsCirclePaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 3f));
-            mDarkSecondsCirclePaint.setShadowLayer(2, 1, 1, Color.BLACK);
+            //mDarkSecondsCirclePaint.setShadowLayer(2, 1, 1, Color.BLACK);
 
             smallTextPaint = new Paint();
             smallTextPaint.setAntiAlias(true);
             smallTextPaint.setTextAlign(Paint.Align.CENTER);
-            smallTextPaint.setColor(getResources().getColor(R.color.white));
+            smallTextPaint.setColor(getResources().getColor(R.color.complications_gray));
             smallTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita Heavy Bold.ttf"));
             smallTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_small));
 
             largeTextPaint = new Paint();
             largeTextPaint.setAntiAlias(true);
             largeTextPaint.setTextAlign(Paint.Align.CENTER);
-            largeTextPaint.setColor(getResources().getColor(R.color.white));
+            largeTextPaint.setColor(getResources().getColor(R.color.complications_gray));
             largeTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
             largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large));
 
             mediumTextPaint = new Paint();
             mediumTextPaint.setAntiAlias(true);
             mediumTextPaint.setTextAlign(Paint.Align.CENTER);
-            mediumTextPaint.setColor(getResources().getColor(R.color.white));
+            mediumTextPaint.setColor(getResources().getColor(R.color.complications_gray));
             mediumTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
             mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium));
 
             normalTextPaint = new Paint();
             normalTextPaint.setAntiAlias(true);
             normalTextPaint.setTextAlign(Paint.Align.CENTER);
-            normalTextPaint.setColor(getResources().getColor(R.color.white));
+            normalTextPaint.setColor(getResources().getColor(R.color.complications_gray));
             normalTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
             normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
 
             accentFillPaint= new Paint();
             accentFillPaint.setAntiAlias(true);
             accentFillPaint.setTextAlign(Paint.Align.CENTER);
+            accentFillPaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 1.5f));
             accentFillPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
 
             complicationArcAccentPaint= new Paint();
@@ -257,7 +268,7 @@ public class F35Face extends CanvasWatchFaceService {
             logoTextPaint= new Paint();
             logoTextPaint.setAntiAlias(true);
             logoTextPaint.setTextAlign(Paint.Align.CENTER);
-            logoTextPaint.setColor(getResources().getColor(R.color.white));
+            logoTextPaint.setColor(Color.BLACK);
             logoTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/square_sans_serif_7.ttf"));
             logoTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_logo_text));
 
@@ -334,12 +345,23 @@ public class F35Face extends CanvasWatchFaceService {
 
             int width = bounds.width();
             int height = bounds.height();
+            CR = width/7.4f;
             /*
              * These calculations reflect the rotation in degrees per unit of time, e.g.,
              * 360 / 60 = 6 and 360 / 12 = 30.
              */
-            final float seconds =
+            float seconds =
                     (mCalendar.get(Calendar.SECOND) + mCalendar.get(Calendar.MILLISECOND) / 1000f);
+
+            //if chrono change seconds value
+            if(LEFT_COMPLICATION_MODE == CHRONO || RIGHT_COMPLICATION_MODE == CHRONO) {
+                if (stopWatch.running) {
+                    seconds = (float)stopWatch.getElapsedTimeSecs()+ (float)stopWatch.getElapsedTimeMili() / 1000f;
+                }else if(stopWatch.paused){
+                    seconds = lastStopWatchSecondsValue;
+                }else seconds = 0;
+            }
+
             final float secondsRotation = seconds * 6f;
 
             final float minutesRotation = mCalendar.get(Calendar.MINUTE) * 6f;
@@ -358,10 +380,20 @@ public class F35Face extends CanvasWatchFaceService {
             }
 
             //Accent triangle
-            drawTopTriangle(canvas, width,height);
+            if (!mAmbient) {
+                drawTopTriangle(canvas, width, height);
+            }
 
             //LOGO TEXT
-            drawTextLogo(canvas, width, height);
+            if(stopWatch.running) {
+                drawTextLogo(canvas, stopWatch.toString()+"."+stopWatch.getElapsedTimeMili(), width, height);
+            }
+            else if(stopWatch.paused) {
+                drawTextLogo(canvas, lastStopWatchValue+"."+lastMillisValue, width, height);
+            }
+            else {
+                drawTextLogo(canvas, "F-35", width, height);
+            }
             //END LOGO TEXT
 
             //COMPLICATIONS
@@ -373,24 +405,55 @@ public class F35Face extends CanvasWatchFaceService {
             }
             //END COMPLICATIONS
 
-            //Hands sizes and round rect readius
-            int RR = ScreenUtils.convertDpToPixels(getApplicationContext(), 10);
-            int RRradius = ScreenUtils.convertDpToPixels(getApplicationContext(), 4.5f);
+            Rect srcRect = new Rect(0,0,hoursBitmap.getWidth(),hoursBitmap.getHeight());
+            Rect dstRect = new Rect((int)(width/2f-(height/handFactor)/2f),0,(int)(width/2f+(height/handFactor)/2f),height);
 
+            /*
             //Minutes hand
             canvas.save();
             canvas.rotate(minutesRotation, width / 2, width / 2);
-            canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.20F, mDarkSecondsCirclePaint);
-            canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.20F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
+            canvas.drawBitmap(minutesBitmap,srcRect,dstRect,whiteFillPaint);
             canvas.restore();
             //END Minutes hands
 
             //Hours hand
             canvas.save();
             canvas.rotate(hoursRotation, width / 2, width / 2);
-            canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mDarkSecondsCirclePaint);
+            canvas.drawBitmap(hoursBitmap, srcRect, dstRect, whiteFillPaint);
+            canvas.restore();
+            //END Hours hand
+
+            //Center circle
+            canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 6), mDarkSecondsCirclePaint);
+
+            //Sec hand
+            canvas.save();
+            canvas.rotate(secondsRotation, width / 2, width / 2);
+            canvas.drawBitmap(secBitmap, srcRect, dstRect, whiteFillPaint);
+            canvas.restore();
+            //END sec hand
+            */
+
+            //Hands sizes and round rect readius
+            int RR = ScreenUtils.convertDpToPixels(getApplicationContext(), 10);
+            int RRradius = ScreenUtils.convertDpToPixels(getApplicationContext(), 4f);
+
+            //Minutes hand
+            canvas.save();
+            canvas.rotate(minutesRotation, width / 2, width / 2);
+            canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.20F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
+            canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.20F, mDarkSecondsCirclePaint);
+            canvas.restore();
+            //END Minutes hands
+
+            //Hours hand
+            canvas.save();
+            canvas.rotate(hoursRotation, width / 2, width / 2);
             canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.35F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
-            canvas.drawCircle(width/2, (height / 2F) * 0.39F, ScreenUtils.convertDpToPixels(getApplicationContext(), 3F),accentFillPaint);
+            canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mDarkSecondsCirclePaint);
+            if (!mAmbient) {
+                canvas.drawCircle(width / 2, (height / 2F) * 0.39F, ScreenUtils.convertDpToPixels(getApplicationContext(), 3F), accentFillPaint);
+            }
             canvas.restore();
             //END Hours hand
 
@@ -419,20 +482,56 @@ public class F35Face extends CanvasWatchFaceService {
 
         private void drawLeftComplication(Canvas canvas, int width, int height) {
             float LX = width*0.36f;
-            float LY = height*0.64f;
-            //drawCoordinates(canvas, width, height, LX, LY);
-            //drawMoonPhase(canvas, width, height, LX, LY);
-            drawStopWatch(canvas, width, height, LX, LY);
+            float LY = height*0.62f;
+
+            //draw bg circle
+            canvas.drawCircle(LX,LY,CR,blackFillPaint);
+
+            if(LEFT_COMPLICATION_MODE == MOON) {
+                drawMoonPhase(canvas, width, height, LX, LY);
+            }else if(LEFT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) {
+                drawWeekDays(canvas, width, height, LX, LY);
+            }else if(LEFT_COMPLICATION_MODE == COORDINATES) {
+                drawCoordinates(canvas, width, height, LX, LY);
+            }else if(LEFT_COMPLICATION_MODE == MONTH_AND_DAY) {
+                drawMonthAndDay(canvas, width, height, LX, LY);
+            }else if(LEFT_COMPLICATION_MODE == MONTH_AND_YEAR) {
+                drawMonthAndYear(canvas, width, height, LX, LY);
+            }else if(LEFT_COMPLICATION_MODE == CHRONO) {
+                String text = "START";
+                if(stopWatch.running) text = "PAUSE";
+                else if(stopWatch.paused) text = "STOP";
+                drawStopWatch(canvas,text, width, height, LX, LY);
+            }
         }
 
         private void drawRightComplication(Canvas canvas, int width, int height) {
             float RX = height*0.64f;
-            float RY = height*0.64f;
-            drawWeekDays(canvas, width, height, RX, RY);
+            float RY = height*0.62f;
+
+            //draw bg circle
+            canvas.drawCircle(RX,RY,CR,blackFillPaint);
+
+            if(RIGHT_COMPLICATION_MODE == MOON) {
+                drawMoonPhase(canvas, width, height, RX, RY);
+            }else if(RIGHT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) {
+                drawWeekDays(canvas, width, height, RX, RY);
+            }else if(RIGHT_COMPLICATION_MODE == COORDINATES) {
+                drawCoordinates(canvas, width, height, RX, RY);
+            }else if(RIGHT_COMPLICATION_MODE == MONTH_AND_DAY) {
+                drawMonthAndDay(canvas, width, height, RX, RY);
+            }else if(RIGHT_COMPLICATION_MODE == MONTH_AND_YEAR) {
+                drawMonthAndYear(canvas, width, height, RX, RY);
+            }else if(RIGHT_COMPLICATION_MODE == CHRONO) {
+                String text = "START";
+                if(stopWatch.running) text = "PAUSE";
+                else if(stopWatch.paused) text = "STOP";
+                drawStopWatch(canvas,text, width, height, RX, RY);
+            }
         }
 
         private void drawWeekDays(Canvas canvas, int width, int height,  float CX, float CY) {
-            float CR = width/8.5f;
+
             String[] days =getWeekDaysSymbols();
             Path rPath = new Path();
             rPath.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
@@ -442,13 +541,14 @@ public class F35Face extends CanvasWatchFaceService {
 
                 canvas.save();
                 canvas.rotate(i * 51.4f, CX, CY);
+                int previousColor = smallTextPaint.getColor();
                 if(days[i].toUpperCase().equalsIgnoreCase(getWeekDay())) {
                     smallTextPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 }else {
-                    smallTextPaint.setColor(Color.WHITE);
+                    smallTextPaint.setColor(previousColor);
                 }
                 canvas.drawTextOnPath(days[i].toUpperCase(), rPath, 0, 0, smallTextPaint);
-                smallTextPaint.setColor(Color.WHITE);
+                smallTextPaint.setColor(previousColor);
                 canvas.restore();
             }
 
@@ -476,7 +576,6 @@ public class F35Face extends CanvasWatchFaceService {
             }
 
             //draw
-            float CR = width/8.5f;
             canvas.save();
             canvas.rotate(90, CX, CY);
             Path path = new Path();
@@ -496,16 +595,17 @@ public class F35Face extends CanvasWatchFaceService {
 
         private String lastStopWatchValue = "";
         private String lastMillisValue = "";
-        private void drawStopWatch(Canvas canvas, int width, int height,  float CX, float CY) {
+        private int lastStopWatchSecondsValue = 0;
+        private void drawStopWatch(Canvas canvas, String text, int width, int height,  float CX, float CY) {
             //draw
-            float CR = width/8.5f;
             canvas.save();
             canvas.rotate(90, CX, CY);
             Path path = new Path();
             path.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
-            canvas.drawTextOnPath("STOPWATCH", path, 0, 0, smallTextPaint);
+            canvas.drawTextOnPath("CHRONO", path, 0, 0, smallTextPaint);
             canvas.restore();
 
+            /*
             String chrono;
             String millis;
             if(stopWatch.paused) {
@@ -517,17 +617,16 @@ public class F35Face extends CanvasWatchFaceService {
                 lastStopWatchValue = chrono;
                 lastMillisValue = millis;
             }
+            */
 
             Rect bounds = new Rect();
-            normalTextPaint.getTextBounds(chrono, 0, chrono.length(), bounds);
-            canvas.drawText(chrono, CX, CY + bounds.height() / 2, normalTextPaint);
-            smallTextPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
-            canvas.drawText(millis, CX, CY + (bounds.height() / 2) * 3, smallTextPaint);
-            smallTextPaint.setColor(Color.WHITE);
+            normalTextPaint.getTextBounds(text, 0, text.length(), bounds);
+            normalTextPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
+            canvas.drawText(text, CX, CY + bounds.height() / 2, normalTextPaint);
         }
 
         private void drawMonthAndDay(Canvas canvas, int width, int height, float CX, float CY) {
-            float CR = width/8.5f;
+
             //left bottom
             //canvas.drawCircle(LX, LY, CR, mSecondsCirclePaint);
             canvas.save();
@@ -544,7 +643,7 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void drawMoonPhase(Canvas canvas, int W, int H, float CX, float CY) {
-            float CR = W/8.5f;
+
             //left bottom
             //canvas.drawCircle(LX, LY, CR, mSecondsCirclePaint);
             canvas.save();
@@ -617,7 +716,7 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void drawMonthAndYear(Canvas canvas, int width, int height, float CX, float CY) {
-            float CR = width/8.5f;
+
             //left bottom
             //canvas.drawCircle(LX, LY, CR, mSecondsCirclePaint);
             canvas.save();
@@ -630,22 +729,22 @@ public class F35Face extends CanvasWatchFaceService {
             String year = getYear();
             Rect bounds = new Rect();
             largeTextPaint.getTextBounds(year, 0, year.length(), bounds);
-            canvas.drawText(year,CX,CY+bounds.height()/2, mediumTextPaint);
+            canvas.drawText(year, CX, CY + bounds.height() / 2, mediumTextPaint);
         }
 
         private void drawTopTriangle(Canvas canvas, int width, int height) {
             int TS = ScreenUtils.convertDpToPixels(getApplicationContext(),5);
             Path minutesPath = new Path();
-            minutesPath.moveTo((width / 2), (height / 2) * 0.3f);
-            minutesPath.lineTo((width / 2) - TS, (height / 2) * 0.3f - TS * 1.5F);
-            minutesPath.lineTo((width / 2) + TS, (height / 2) * 0.3f - TS * 1.5F);
-            minutesPath.lineTo((width / 2), (height / 2) * 0.3f);
+            minutesPath.moveTo((width / 2), (height / 2) * 0.31f);
+            minutesPath.lineTo((width / 2) - TS, (height / 2) * 0.3f - TS * 1.9F);
+            minutesPath.lineTo((width / 2) + TS, (height / 2) * 0.3f - TS * 1.9F);
+            minutesPath.lineTo((width / 2), (height / 2) * 0.31f);
             minutesPath.close();
             canvas.drawPath(minutesPath, accentFillPaint);
         }
 
-        private void drawTextLogo(Canvas canvas, int width, int height) {
-            canvas.drawText("F-35", width / 2, (height / 2) * 0.80f, logoTextPaint);
+        private void drawTextLogo(Canvas canvas, String text, int width, int height) {
+            canvas.drawText(text, width / 2, (height / 2) * 0.80f, logoTextPaint);
         }
 
         private String[] getWeekDaysSymbols(){
@@ -892,7 +991,7 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void setGradient(int color) {
-            Log.d("color=",color+"");
+            Log.d("color=", color + "");
             selectedColorCode = color;
         }
 
@@ -939,26 +1038,45 @@ public class F35Face extends CanvasWatchFaceService {
         private void handleTouch(int x, int y) {
             int W = ScreenUtils.getScreenWidth(getApplicationContext());
             int H = ScreenUtils.getScreenHeight(getApplicationContext());
-            int DELTA_X =W/5;
-            int DELTA_Y = H/5;
+            int DELTA_X =W/4;
+            int DELTA_Y = H/4;
             //LEFT CENTER
+            /*
             if(x <(W/4 + DELTA_X) && x >(W/4 - DELTA_X)) {
                 if(y <(H/2 + DELTA_Y) && y >(H/2 - DELTA_Y)) {
                     handleTouchLeftCenter();
                     return;
                 }
             }
+            */
             //RIGHT CENTER
+            /*
             if(x <(W*3/4 + DELTA_X) && x >(W*3/4 - DELTA_X)) {
                 if(y <(H/2 + DELTA_Y) && y >(H/2 - DELTA_Y)) {
                     handleTouchRightCenter();
                     return;
                 }
-            }
+            }*/
             //BOTTOM CENTER
+            /*
             if(x <(W/2 + DELTA_X) && x >(W/2 - DELTA_X)) {
                 if(y <(H*3/4 + DELTA_Y) && y >(H*3/4 - DELTA_Y)) {
                     handleTouchBottomCenter();
+                    return;
+                }
+            }
+            */
+            //LEFT BOTTOM
+            if(x <(W/4 + DELTA_X) && x >(W/4 - DELTA_X)) {
+                if(y >(H/2)) {
+                    handleTouchLeftBottom();
+                    return;
+                }
+            }
+            //RIGHT BOTTOM
+            if(x <(W*3/4 + DELTA_X) && x >(W*3/4 - DELTA_X)) {
+                if(y >(H/2)) {
+                    handleTouchRightBottom();
                     return;
                 }
             }
@@ -972,47 +1090,89 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void handleTouchTopCenter() {
-            if(stopWatch.running) {
-                stopWatch.pause();
-                INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
-                updateTimer();
-            }else if(stopWatch.paused) {
-                stopWatch.stop();
-                INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
-                updateTimer();
-            }
-            else {
-                stopWatch.start();
-                INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_STOPWATCH;
-                updateTimer();
-            }
+
         }
 
         private void handleTouchBottomCenter() {
-            if(BOTTOM_COMPLICATION_MODE == BATTERY) BOTTOM_COMPLICATION_MODE =DAY_NUMBER;
-            else if(BOTTOM_COMPLICATION_MODE == DAY_NUMBER) BOTTOM_COMPLICATION_MODE =DAY_WEEK;
-            else if(BOTTOM_COMPLICATION_MODE == DAY_WEEK) BOTTOM_COMPLICATION_MODE =MONTH;
-            else if(BOTTOM_COMPLICATION_MODE == MONTH) BOTTOM_COMPLICATION_MODE =YEAR;
-            else if(BOTTOM_COMPLICATION_MODE == YEAR) BOTTOM_COMPLICATION_MODE =NONE;
-            else BOTTOM_COMPLICATION_MODE =BATTERY;
+
         }
 
-        private void handleTouchRightCenter() {
-            if(RIGHT_COMPLICATION_MODE == BATTERY) RIGHT_COMPLICATION_MODE =DAY_NUMBER;
-            else if(RIGHT_COMPLICATION_MODE == DAY_NUMBER) RIGHT_COMPLICATION_MODE =DAY_WEEK;
-            else if(RIGHT_COMPLICATION_MODE == DAY_WEEK) RIGHT_COMPLICATION_MODE =MONTH;
-            else if(RIGHT_COMPLICATION_MODE == MONTH) RIGHT_COMPLICATION_MODE =YEAR;
-            else if(RIGHT_COMPLICATION_MODE == YEAR) RIGHT_COMPLICATION_MODE =NONE;
-            else RIGHT_COMPLICATION_MODE =BATTERY;
+        private void handleTouchRightBottom() {
+            if(RIGHT_COMPLICATION_MODE == MOON) RIGHT_COMPLICATION_MODE =WEEK_DAYS_BATTERY;
+            else if(RIGHT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) RIGHT_COMPLICATION_MODE =COORDINATES;
+            else if(RIGHT_COMPLICATION_MODE == COORDINATES) RIGHT_COMPLICATION_MODE =MONTH_AND_DAY;
+            else if(RIGHT_COMPLICATION_MODE == MONTH_AND_DAY) RIGHT_COMPLICATION_MODE =MONTH_AND_YEAR;
+            else if(RIGHT_COMPLICATION_MODE == MONTH_AND_YEAR) RIGHT_COMPLICATION_MODE =CHRONO;
+            else if(RIGHT_COMPLICATION_MODE == CHRONO) {
+
+                String chrono;
+                String millis;
+                if(stopWatch.paused) {
+                    chrono = lastStopWatchValue;
+                    millis = lastMillisValue;
+                }else {
+                    chrono = stopWatch.toString();
+                    millis = String.format("%03d", stopWatch.getElapsedTimeMili());
+                    lastStopWatchValue = chrono;
+                    lastMillisValue = millis;
+                    lastStopWatchSecondsValue = (int)stopWatch.getElapsedTimeSecs();
+                }
+
+                if(stopWatch.running) {
+                    stopWatch.pause();
+                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
+                    updateTimer();
+                }else if(stopWatch.paused) {
+                    stopWatch.stop();
+                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
+                    RIGHT_COMPLICATION_MODE =MOON;
+                    updateTimer();
+                }
+                else {
+                    stopWatch.start();
+                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_STOPWATCH;
+                    updateTimer();
+                }
+            }
         }
 
-        private void handleTouchLeftCenter() {
-            if(LEFT_COMPLICATION_MODE == BATTERY) LEFT_COMPLICATION_MODE =DAY_NUMBER;
-            else if(LEFT_COMPLICATION_MODE == DAY_NUMBER) LEFT_COMPLICATION_MODE =DAY_WEEK;
-            else if(LEFT_COMPLICATION_MODE == DAY_WEEK) LEFT_COMPLICATION_MODE =MONTH;
-            else if(LEFT_COMPLICATION_MODE == MONTH) LEFT_COMPLICATION_MODE =YEAR;
-            else if(LEFT_COMPLICATION_MODE == YEAR) LEFT_COMPLICATION_MODE =NONE;
-            else LEFT_COMPLICATION_MODE =BATTERY;
+        private void handleTouchLeftBottom() {
+            if(LEFT_COMPLICATION_MODE == MOON) LEFT_COMPLICATION_MODE =WEEK_DAYS_BATTERY;
+            else if(LEFT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) LEFT_COMPLICATION_MODE =COORDINATES;
+            else if(LEFT_COMPLICATION_MODE == COORDINATES) LEFT_COMPLICATION_MODE =MONTH_AND_DAY;
+            else if(LEFT_COMPLICATION_MODE == MONTH_AND_DAY) LEFT_COMPLICATION_MODE =MONTH_AND_YEAR;
+            else if(LEFT_COMPLICATION_MODE == MONTH_AND_YEAR) LEFT_COMPLICATION_MODE =CHRONO;
+            else if(LEFT_COMPLICATION_MODE == CHRONO) {
+
+                String chrono;
+                String millis;
+                if(stopWatch.paused) {
+                    chrono = lastStopWatchValue;
+                    millis = lastMillisValue;
+                }else {
+                    chrono = stopWatch.toString();
+                    millis = String.format("%03d", stopWatch.getElapsedTimeMili());
+                    lastStopWatchValue = chrono;
+                    lastMillisValue = millis;
+                    lastStopWatchSecondsValue = (int)stopWatch.getElapsedTimeSecs();
+                }
+
+                if(stopWatch.running) {
+                    stopWatch.pause();
+                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
+                    updateTimer();
+                }else if(stopWatch.paused) {
+                    stopWatch.stop();
+                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
+                    LEFT_COMPLICATION_MODE =MOON;
+                    updateTimer();
+                }
+                else {
+                    stopWatch.start();
+                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_STOPWATCH;
+                    updateTimer();
+                }
+            }
         }
 
     }

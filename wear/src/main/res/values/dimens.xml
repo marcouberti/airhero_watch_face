@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="font_size_logo_text">10dp</dimen>
-    <dimen name="font_size_small">7dp</dimen>
+    <dimen name="font_size_logo_text">12dp</dimen>
+    <dimen name="font_size_small">8dp</dimen>
     <dimen name="font_size_normal">12dp</dimen>
     <dimen name="font_size_medium">18dp</dimen>
     <dimen name="font_size_large">22dp</dimen>
