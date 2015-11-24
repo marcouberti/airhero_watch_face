@@ -128,6 +128,9 @@ public class F35Face extends CanvasWatchFaceService {
         float CR;
         float handW,handH,handFactor;
 
+        Typeface logoTypeface = Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/square_sans_serif_7.ttf");
+        Typeface monospacedTypeface = Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/larabiefont.ttf");
+
         final Handler mUpdateTimeHandler = new EngineHandler(this);
 
         GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(F35Face.this)
@@ -268,8 +271,8 @@ public class F35Face extends CanvasWatchFaceService {
             logoTextPaint= new Paint();
             logoTextPaint.setAntiAlias(true);
             logoTextPaint.setTextAlign(Paint.Align.CENTER);
-            logoTextPaint.setColor(Color.BLACK);
-            logoTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/square_sans_serif_7.ttf"));
+            logoTextPaint.setColor(Color.WHITE);
+            logoTextPaint.setTypeface(logoTypeface);
             logoTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_logo_text));
 
             mHandPaint= new Paint();
@@ -345,7 +348,7 @@ public class F35Face extends CanvasWatchFaceService {
 
             int width = bounds.width();
             int height = bounds.height();
-            CR = width/7.4f;
+            CR = width/8f;
             /*
              * These calculations reflect the rotation in degrees per unit of time, e.g.,
              * 360 / 60 = 6 and 360 / 12 = 30.
@@ -356,7 +359,7 @@ public class F35Face extends CanvasWatchFaceService {
             //if chrono change seconds value
             if(LEFT_COMPLICATION_MODE == CHRONO || RIGHT_COMPLICATION_MODE == CHRONO) {
                 if (stopWatch.running) {
-                    seconds = (float)stopWatch.getElapsedTimeSecs()+ (float)stopWatch.getElapsedTimeMili() / 1000f;
+                    seconds = (float)stopWatch.getElapsedTimeSecs()+ (float)stopWatch.getElapsedTimeMillis() / 1000f;
                 }else if(stopWatch.paused){
                     seconds = lastStopWatchSecondsValue;
                 }else seconds = 0;
@@ -379,19 +382,22 @@ public class F35Face extends CanvasWatchFaceService {
                 canvas.drawColor(Color.BLACK);
             }
 
+
             //Accent triangle
             if (!mAmbient) {
                 drawTopTriangle(canvas, width, height);
             }
 
             //LOGO TEXT
+            logoTextPaint.setTypeface(monospacedTypeface);
             if(stopWatch.running) {
-                drawTextLogo(canvas, stopWatch.toString()+"."+stopWatch.getElapsedTimeMili(), width, height);
+                drawTextLogo(canvas, stopWatch.toString()+"."+String.format("%03d",stopWatch.getElapsedTimeMili()), width, height);
             }
             else if(stopWatch.paused) {
                 drawTextLogo(canvas, lastStopWatchValue+"."+lastMillisValue, width, height);
             }
             else {
+                logoTextPaint.setTypeface(logoTypeface);
                 drawTextLogo(canvas, "F-35", width, height);
             }
             //END LOGO TEXT
@@ -434,6 +440,7 @@ public class F35Face extends CanvasWatchFaceService {
             //END sec hand
             */
 
+
             //Hands sizes and round rect readius
             int RR = ScreenUtils.convertDpToPixels(getApplicationContext(), 10);
             int RRradius = ScreenUtils.convertDpToPixels(getApplicationContext(), 4f);
@@ -452,7 +459,7 @@ public class F35Face extends CanvasWatchFaceService {
             canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.35F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
             canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mDarkSecondsCirclePaint);
             if (!mAmbient) {
-                canvas.drawCircle(width / 2, (height / 2F) * 0.39F, ScreenUtils.convertDpToPixels(getApplicationContext(), 3F), accentFillPaint);
+                canvas.drawCircle(width / 2, (height / 2F) * 0.39F, ScreenUtils.convertDpToPixels(getApplicationContext(), 2.5F), accentFillPaint);
             }
             canvas.restore();
             //END Hours hand
@@ -481,11 +488,11 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void drawLeftComplication(Canvas canvas, int width, int height) {
-            float LX = width*0.36f;
-            float LY = height*0.62f;
+            float LX = width*0.3530f;
+            float LY = height*0.6220f;
 
             //draw bg circle
-            canvas.drawCircle(LX,LY,CR,blackFillPaint);
+            //canvas.drawCircle(LX,LY,CR,blackFillPaint);
 
             if(LEFT_COMPLICATION_MODE == MOON) {
                 drawMoonPhase(canvas, width, height, LX, LY);
@@ -506,11 +513,11 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void drawRightComplication(Canvas canvas, int width, int height) {
-            float RX = height*0.64f;
-            float RY = height*0.62f;
+            float RX = height*0.6420f;
+            float RY = height*0.6220f;
 
             //draw bg circle
-            canvas.drawCircle(RX,RY,CR,blackFillPaint);
+            //canvas.drawCircle(RX,RY,CR,blackFillPaint);
 
             if(RIGHT_COMPLICATION_MODE == MOON) {
                 drawMoonPhase(canvas, width, height, RX, RY);

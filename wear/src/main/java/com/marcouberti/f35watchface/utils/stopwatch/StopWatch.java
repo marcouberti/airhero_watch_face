@@ -40,6 +40,14 @@ public class StopWatch {
         return elapsed;
     }
 
+    public long getElapsedTimeMillis() {
+        long elapsed = 0;
+        if (running) {
+            elapsed =((System.currentTimeMillis() - startTime)) % 1000 ;
+        }
+        return elapsed;
+    }
+
     //elaspsed time in seconds
     public long getElapsedTimeSecs() {
         long elapsed = 0;
