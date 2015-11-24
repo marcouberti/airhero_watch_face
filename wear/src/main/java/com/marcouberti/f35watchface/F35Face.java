@@ -92,6 +92,7 @@ public class F35Face extends CanvasWatchFaceService {
     private static final int MONTH_AND_DAY = 3;
     private static final int MONTH_AND_YEAR = 4;
     private static final int MOON = 5;
+    private static final int WEAR_BATTERY = 6;
 
     //private int BOTTOM_COMPLICATION_MODE = BATTERY;
     private int LEFT_COMPLICATION_MODE = MOON;
@@ -118,7 +119,7 @@ public class F35Face extends CanvasWatchFaceService {
         Paint logoTextPaint;
         Paint blackFillPaint, whiteFillPaint, darkGrayFillPaint;
         Paint accentFillPaint;
-        Paint complicationArcAccentPaint;
+        Paint complicationArcAccentPaint,complicationArcBatteryPaint;
         Paint largeTextPaint, mediumTextPaint, normalTextPaint;
         boolean mAmbient;
         boolean nightMode = false;
@@ -264,9 +265,16 @@ public class F35Face extends CanvasWatchFaceService {
             complicationArcAccentPaint= new Paint();
             complicationArcAccentPaint.setStyle(Paint.Style.STROKE);
             complicationArcAccentPaint.setStrokeCap(Paint.Cap.BUTT);
-            complicationArcAccentPaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(),3));
+            complicationArcAccentPaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 3));
             complicationArcAccentPaint.setAntiAlias(true);
             complicationArcAccentPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
+
+            complicationArcBatteryPaint= new Paint();
+            complicationArcBatteryPaint.setStyle(Paint.Style.STROKE);
+            complicationArcBatteryPaint.setStrokeCap(Paint.Cap.BUTT);
+            complicationArcBatteryPaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 10));
+            complicationArcBatteryPaint.setAntiAlias(true);
+            complicationArcBatteryPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
 
             logoTextPaint= new Paint();
             logoTextPaint.setAntiAlias(true);
@@ -345,6 +353,7 @@ public class F35Face extends CanvasWatchFaceService {
 
             accentFillPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
             complicationArcAccentPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
+            complicationArcBatteryPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
 
             int width = bounds.width();
             int height = bounds.height();
@@ -491,9 +500,6 @@ public class F35Face extends CanvasWatchFaceService {
             float LX = width*0.3530f;
             float LY = height*0.6220f;
 
-            //draw bg circle
-            //canvas.drawCircle(LX,LY,CR,blackFillPaint);
-
             if(LEFT_COMPLICATION_MODE == MOON) {
                 drawMoonPhase(canvas, width, height, LX, LY);
             }else if(LEFT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) {
@@ -509,6 +515,8 @@ public class F35Face extends CanvasWatchFaceService {
                 if(stopWatch.running) text = "PAUSE";
                 else if(stopWatch.paused) text = "STOP";
                 drawStopWatch(canvas,text, width, height, LX, LY);
+            }else if(LEFT_COMPLICATION_MODE == WEAR_BATTERY) {
+                drawBatteryWear(canvas, width, height, LX, LY);
             }
         }
 
@@ -534,7 +542,32 @@ public class F35Face extends CanvasWatchFaceService {
                 if(stopWatch.running) text = "PAUSE";
                 else if(stopWatch.paused) text = "STOP";
                 drawStopWatch(canvas,text, width, height, RX, RY);
+            }else if(RIGHT_COMPLICATION_MODE == WEAR_BATTERY) {
+                drawBatteryWear(canvas, width, height, RX, RY);
             }
+        }
+
+        private void drawBatteryWear(Canvas canvas, int width, int height,  float CX, float CY) {
+            //Battery level
+            int batteryPercentage = getBatteryLevel();
+            int deg = batteryPercentage * 360 /100;
+            canvas.save();
+            canvas.rotate(-90, CX, CY);
+            complicationArcBatteryPaint.setAlpha(40);
+            float RP = 0.7f;
+            canvas.drawArc(new RectF(CX - CR * RP, CY - CR * RP, CX + CR * RP, CY + CR * RP), 0, 360, false, complicationArcBatteryPaint);
+            complicationArcBatteryPaint.setAlpha(255);
+            canvas.drawArc(new RectF(CX - CR * RP, CY - CR * RP, CX + CR * RP, CY + CR * RP), 0, deg, false, complicationArcBatteryPaint);
+            canvas.restore();
+
+            //Day number
+            String perc = batteryPercentage+"%";
+            Rect bounds = new Rect();
+            int previousColor = normalTextPaint.getColor();
+            normalTextPaint.setColor(Color.WHITE);
+            normalTextPaint.getTextBounds(perc, 0, perc.length(), bounds);
+            canvas.drawText(perc, CX, CY + bounds.height() / 2, normalTextPaint);
+            normalTextPaint.setColor(previousColor);
         }
 
         private void drawWeekDays(Canvas canvas, int width, int height,  float CX, float CY) {
@@ -570,8 +603,11 @@ public class F35Face extends CanvasWatchFaceService {
             //Day number
             String dayNumber = getDayNumber();
             Rect bounds = new Rect();
-            mediumTextPaint.getTextBounds(dayNumber, 0, dayNumber.length(), bounds);
-            canvas.drawText(dayNumber, CX, CY + bounds.height() / 2, mediumTextPaint);
+            int previousColor = normalTextPaint.getColor();
+            normalTextPaint.setColor(Color.WHITE);
+            normalTextPaint.getTextBounds(dayNumber, 0, dayNumber.length(), bounds);
+            canvas.drawText(dayNumber, CX, CY + bounds.height() / 2, normalTextPaint);
+            normalTextPaint.setColor(previousColor);
         }
 
         long lastLocationTs = -1;
@@ -595,9 +631,12 @@ public class F35Face extends CanvasWatchFaceService {
             String lat = parts[0].trim();
             String lon = parts[1].trim();
             Rect bounds = new Rect();
+            int previousColor = normalTextPaint.getColor();
             normalTextPaint.getTextBounds(lat, 0, lat.length(), bounds);
+            normalTextPaint.setColor(Color.WHITE);
             canvas.drawText(lat, CX, CY, normalTextPaint);
             canvas.drawText(lon, CX, CY+bounds.height()+4, normalTextPaint);
+            normalTextPaint.setColor(previousColor);
         }
 
         private String lastStopWatchValue = "";
@@ -611,20 +650,6 @@ public class F35Face extends CanvasWatchFaceService {
             path.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
             canvas.drawTextOnPath("CHRONO", path, 0, 0, smallTextPaint);
             canvas.restore();
-
-            /*
-            String chrono;
-            String millis;
-            if(stopWatch.paused) {
-                chrono = lastStopWatchValue;
-                millis = lastMillisValue;
-            }else {
-                chrono = stopWatch.toString();
-                millis = String.format("%03d", stopWatch.getElapsedTimeMili());
-                lastStopWatchValue = chrono;
-                lastMillisValue = millis;
-            }
-            */
 
             Rect bounds = new Rect();
             normalTextPaint.getTextBounds(text, 0, text.length(), bounds);
@@ -645,8 +670,11 @@ public class F35Face extends CanvasWatchFaceService {
 
             String dayNumber = getDayNumber();
             Rect bounds = new Rect();
+            int previousColor = largeTextPaint.getColor();
             largeTextPaint.getTextBounds(dayNumber, 0, dayNumber.length(), bounds);
+            largeTextPaint.setColor(Color.WHITE);
             canvas.drawText(dayNumber, CX, CY + bounds.height() / 2, largeTextPaint);
+            largeTextPaint.setColor(previousColor);
         }
 
         private void drawMoonPhase(Canvas canvas, int W, int H, float CX, float CY) {
@@ -735,8 +763,11 @@ public class F35Face extends CanvasWatchFaceService {
 
             String year = getYear();
             Rect bounds = new Rect();
-            largeTextPaint.getTextBounds(year, 0, year.length(), bounds);
+            int previousColor = mediumTextPaint.getColor();
+            mediumTextPaint.setColor(Color.WHITE);
+            mediumTextPaint.getTextBounds(year, 0, year.length(), bounds);
             canvas.drawText(year, CX, CY + bounds.height() / 2, mediumTextPaint);
+            mediumTextPaint.setColor(previousColor);
         }
 
         private void drawTopTriangle(Canvas canvas, int width, int height) {
@@ -1109,7 +1140,8 @@ public class F35Face extends CanvasWatchFaceService {
             else if(RIGHT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) RIGHT_COMPLICATION_MODE =COORDINATES;
             else if(RIGHT_COMPLICATION_MODE == COORDINATES) RIGHT_COMPLICATION_MODE =MONTH_AND_DAY;
             else if(RIGHT_COMPLICATION_MODE == MONTH_AND_DAY) RIGHT_COMPLICATION_MODE =MONTH_AND_YEAR;
-            else if(RIGHT_COMPLICATION_MODE == MONTH_AND_YEAR) RIGHT_COMPLICATION_MODE =CHRONO;
+            else if(RIGHT_COMPLICATION_MODE == MONTH_AND_YEAR) RIGHT_COMPLICATION_MODE =WEAR_BATTERY;
+            else if(RIGHT_COMPLICATION_MODE == WEAR_BATTERY) RIGHT_COMPLICATION_MODE =CHRONO;
             else if(RIGHT_COMPLICATION_MODE == CHRONO) {
 
                 String chrono;
@@ -1148,7 +1180,8 @@ public class F35Face extends CanvasWatchFaceService {
             else if(LEFT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) LEFT_COMPLICATION_MODE =COORDINATES;
             else if(LEFT_COMPLICATION_MODE == COORDINATES) LEFT_COMPLICATION_MODE =MONTH_AND_DAY;
             else if(LEFT_COMPLICATION_MODE == MONTH_AND_DAY) LEFT_COMPLICATION_MODE =MONTH_AND_YEAR;
-            else if(LEFT_COMPLICATION_MODE == MONTH_AND_YEAR) LEFT_COMPLICATION_MODE =CHRONO;
+            else if(LEFT_COMPLICATION_MODE == MONTH_AND_YEAR) LEFT_COMPLICATION_MODE =WEAR_BATTERY;
+            else if(LEFT_COMPLICATION_MODE == WEAR_BATTERY) LEFT_COMPLICATION_MODE =CHRONO;
             else if(LEFT_COMPLICATION_MODE == CHRONO) {
 
                 String chrono;
