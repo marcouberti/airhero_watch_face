@@ -361,7 +361,7 @@ public class F35Face extends CanvasWatchFaceService {
                 if (stopWatch.running) {
                     seconds = (float)stopWatch.getElapsedTimeSecs()+ (float)stopWatch.getElapsedTimeMillis() / 1000f;
                 }else if(stopWatch.paused){
-                    seconds = lastStopWatchSecondsValue;
+                    seconds = lastStopWatchSecondsValue+lastMillisValue/1000f;
                 }else seconds = 0;
             }
 
@@ -391,7 +391,7 @@ public class F35Face extends CanvasWatchFaceService {
             //LOGO TEXT
             logoTextPaint.setTypeface(monospacedTypeface);
             if(stopWatch.running) {
-                drawTextLogo(canvas, stopWatch.toString()+"."+String.format("%03d",stopWatch.getElapsedTimeMili()), width, height);
+                drawTextLogo(canvas, stopWatch.toString()+"."+String.format("%03d",stopWatch.getElapsedTimeMillis()), width, height);
             }
             else if(stopWatch.paused) {
                 drawTextLogo(canvas, lastStopWatchValue+"."+lastMillisValue, width, height);
@@ -601,7 +601,7 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private String lastStopWatchValue = "";
-        private String lastMillisValue = "";
+        private int lastMillisValue = 0;
         private int lastStopWatchSecondsValue = 0;
         private void drawStopWatch(Canvas canvas, String text, int width, int height,  float CX, float CY) {
             //draw
@@ -1113,13 +1113,13 @@ public class F35Face extends CanvasWatchFaceService {
             else if(RIGHT_COMPLICATION_MODE == CHRONO) {
 
                 String chrono;
-                String millis;
+                int millis;
                 if(stopWatch.paused) {
                     chrono = lastStopWatchValue;
                     millis = lastMillisValue;
                 }else {
                     chrono = stopWatch.toString();
-                    millis = String.format("%03d", stopWatch.getElapsedTimeMili());
+                    millis = (int)stopWatch.getElapsedTimeMillis();
                     lastStopWatchValue = chrono;
                     lastMillisValue = millis;
                     lastStopWatchSecondsValue = (int)stopWatch.getElapsedTimeSecs();
@@ -1152,13 +1152,13 @@ public class F35Face extends CanvasWatchFaceService {
             else if(LEFT_COMPLICATION_MODE == CHRONO) {
 
                 String chrono;
-                String millis;
+                int millis;
                 if(stopWatch.paused) {
                     chrono = lastStopWatchValue;
                     millis = lastMillisValue;
                 }else {
                     chrono = stopWatch.toString();
-                    millis = String.format("%03d", stopWatch.getElapsedTimeMili());
+                    millis = (int)stopWatch.getElapsedTimeMillis();
                     lastStopWatchValue = chrono;
                     lastMillisValue = millis;
                     lastStopWatchSecondsValue = (int)stopWatch.getElapsedTimeSecs();

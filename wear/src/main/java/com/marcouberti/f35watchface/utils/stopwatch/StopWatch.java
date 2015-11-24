@@ -32,7 +32,7 @@ public class StopWatch {
     }
 
     //elaspsed time in milliseconds
-    public long getElapsedTimeMili() {
+    public long getElapsedTimeMilib() {
         long elapsed = 0;
         if (running) {
             elapsed =((System.currentTimeMillis() - startTime)/100) % 1000 ;
