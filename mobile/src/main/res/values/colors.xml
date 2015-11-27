@@ -10,61 +10,16 @@
     <color name="color_item_label_color">#ffffff</color>
     <color name="color_item_circle_border_color">#424242</color>
     <color name="dark_gray">#4d4d4d</color>
-    <!--AURORA-->
+
+    <!--Accents-->
     <color name="col_1">#0079ff</color>
     <color name="col_2">#bf66ff</color>
-
-    <!--FIRE-->
     <color name="col_3">#f3d700</color>
     <color name="col_4">#ff0000</color>
-
-    <!--ACQUA-->
     <color name="col_5">#179b00</color>
-
-    <!-- FOREST -->
     <color name="col_6">#afef00</color>
-
-    <!-- TROPICAL PARADISE -->
-    <color name="col_7">#00C9FF</color>
-    <color name="col_8">#00ff7d</color>
-
-
-    <!-- Violet illusion -->
-    <color name="col_9">#fc00ff</color>
-
-
-    <!-- Fruit flavour -->
-    <color name="col_10">#ff2f00</color>
-
-    <!-- Summer -->
-    <color name="col_11">#f30f58</color>
-    <color name="col_12">#07e2a7</color>
-
-
-    <!-- Terra -->
-    <color name="col_13">#f49a00</color>
-    <color name="col_14">#E07F15</color>
-
-    <!-- Sunflower -->
-    <color name="col_15">#FAFF89</color>
-    <color name="col_16">#FEB60A</color>
-
-    <color name="col_17">#8E9FBD</color>
-
-
-    <!-- Passion -->
-    <color name="col_18">#c2000f</color>
-    <color name="col_19">#750047</color>
-
-
-    <color name="col_20">#1B589C</color>
-
-    <color name="col_21">#67A124</color>
-
-
-    <color name="col_22">#AD0AAB</color>
-
-
-
-    <color name="col_23">#e6ff00</color>
+    <color name="col_7">#00ff7d</color>
+    <color name="col_8">#f30f58</color>
+    <color name="col_9">#f49a00</color>
+    <color name="col_10">#8E9FBD</color>
 </resources>

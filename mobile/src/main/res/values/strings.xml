@@ -9,29 +9,16 @@
     <string name="background_gradients">Color</string>
     <string name="rate_this_app">Rate us</string>
     <string name="see_other_apps">Explore more</string>
-    <string name="col_1">Color 1</string>
-    <string name="col_2">Color 2</string>
-    <string name="col_3">Color 3</string>
-    <string name="col_4">Color 4</string>
-    <string name="col_5">Color 5</string>
-    <string name="col_6">Color 6</string>
-    <string name="col_7">Color 7</string>
-    <string name="col_8">Color 8</string>
-    <string name="col_9">Color 9</string>
-    <string name="col_10">Color 10</string>
-    <string name="col_11">Color 11</string>
-    <string name="col_12">Color 12</string>
-    <string name="col_13">Color 13</string>
-    <string name="col_14">Color 14</string>
-    <string name="col_15">Color 15</string>
-    <string name="col_16">Color 16</string>
-    <string name="col_17">Color 17</string>
-    <string name="col_18">Color 18</string>
-    <string name="col_19">Color 19</string>
-    <string name="col_20">Color 20</string>
-    <string name="col_21">Color 21</string>
-    <string name="col_22">Color 22</string>
-    <string name="col_23">Color 23</string>
+    <string name="col_1">Blue</string>
+    <string name="col_2">Violet</string>
+    <string name="col_3">Yellow</string>
+    <string name="col_4">Red</string>
+    <string name="col_5">Dark green</string>
+    <string name="col_6">Green</string>
+    <string name="col_7">Aqua</string>
+    <string name="col_8">Fruit</string>
+    <string name="col_9">Orange</string>
+    <string name="col_10">Silver</string>
 
     <string-array name="gradients_face_array">
         <item>@string/col_1</item>
@@ -44,19 +31,6 @@
         <item>@string/col_8</item>
         <item>@string/col_9</item>
         <item>@string/col_10</item>
-        <item>@string/col_11</item>
-        <item>@string/col_12</item>
-        <item>@string/col_13</item>
-        <item>@string/col_14</item>
-        <item>@string/col_15</item>
-        <item>@string/col_16</item>
-        <item>@string/col_17</item>
-        <item>@string/col_18</item>
-        <item>@string/col_19</item>
-        <item>@string/col_20</item>
-        <item>@string/col_21</item>
-        <item>@string/col_22</item>
-        <item>@string/col_23</item>
     </string-array>
 
 
