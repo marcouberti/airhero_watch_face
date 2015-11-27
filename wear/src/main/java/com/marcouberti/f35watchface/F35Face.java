@@ -156,10 +156,16 @@ public class F35Face extends CanvasWatchFaceService {
             mIsRound = insets.isRound();
             if(mIsRound) {
                 //set round bg images
-                //TODO
+                smallTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_small));
+                normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
+                mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium));
+                largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large));
             }else{
                 //set square bg images
-                //TODO
+                smallTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_small_square));
+                normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal_square));
+                mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium_square));
+                largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large_square));
             }
         }
 
