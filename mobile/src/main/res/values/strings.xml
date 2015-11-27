@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">F35</string>
-    <string name="config_activity_title">F35 Watch Face</string>
+    <string name="app_name">Airhero</string>
+    <string name="config_activity_title">Airhero Watch Face</string>
 
     <string name="title_no_device_connected">No wearable device is currently connected.</string>
     <string name="ok_no_device_connected">OK</string>

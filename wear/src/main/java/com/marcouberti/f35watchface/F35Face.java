@@ -381,7 +381,7 @@ public class F35Face extends CanvasWatchFaceService {
                     drawTextLogo(canvas, lastStopWatchValue + "." + lastMillisValue, width, height);
                 } else {
                     logoTextPaint.setTypeface(logoTypeface);
-                    drawTextLogo(canvas, "F-35", width, height);
+                    drawTextLogo(canvas, "AIRHERO", width, height);
                 }
             }
             //END LOGO TEXT
