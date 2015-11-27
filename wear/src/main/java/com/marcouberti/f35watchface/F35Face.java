@@ -160,12 +160,14 @@ public class F35Face extends CanvasWatchFaceService {
                 normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
                 mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium));
                 largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large));
+                chronoPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
             }else{
                 //set square bg images
                 smallTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_small_square));
                 normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal_square));
                 mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium_square));
                 largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large_square));
+                chronoPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal_square));
             }
         }
 
@@ -719,6 +721,9 @@ public class F35Face extends CanvasWatchFaceService {
 
         private void drawTopTriangle(Canvas canvas, int width, int height) {
             int TS = ScreenUtils.convertDpToPixels(getApplicationContext(), 5);
+            if(!mIsRound) {
+                TS = ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f);
+            }
             Path minutesPath = new Path();
             minutesPath.moveTo((width / 2), (height / 2) * 0.31f);
             minutesPath.lineTo((width / 2) - TS, (height / 2) * 0.3f - TS * 1.9F);
