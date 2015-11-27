@@ -155,19 +155,29 @@ public class F35Face extends CanvasWatchFaceService {
             super.onApplyWindowInsets(insets);
             mIsRound = insets.isRound();
             if(mIsRound) {
+                float smallSize = ScreenUtils.getScreenWidth(getApplicationContext())/28f;
+                float normalSize = ScreenUtils.getScreenWidth(getApplicationContext())/17f;
+                float mediumSize = ScreenUtils.getScreenWidth(getApplicationContext())/15f;
+                float largeSize = ScreenUtils.getScreenWidth(getApplicationContext())/12f;
                 //set round bg images
-                smallTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_small));
-                normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
-                mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium));
-                largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large));
-                chronoPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
+                smallTextPaint.setTextSize(smallSize);
+                normalTextPaint.setTextSize(normalSize);
+                mediumTextPaint.setTextSize(mediumSize);
+                largeTextPaint.setTextSize(largeSize);
+                chronoPaint.setTextSize(normalSize);
+                logoTextPaint.setTextSize(normalSize);
             }else{
-                //set square bg images
-                smallTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_small_square));
-                normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal_square));
-                mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium_square));
-                largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large_square));
-                chronoPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal_square));
+                float smallSize = ScreenUtils.getScreenWidth(getApplicationContext())/28f;
+                float normalSize = ScreenUtils.getScreenWidth(getApplicationContext())/17f;
+                float mediumSize = ScreenUtils.getScreenWidth(getApplicationContext())/15f;
+                float largeSize = ScreenUtils.getScreenWidth(getApplicationContext())/12f;
+                //set round bg images
+                smallTextPaint.setTextSize(smallSize);
+                normalTextPaint.setTextSize(normalSize);
+                mediumTextPaint.setTextSize(mediumSize);
+                largeTextPaint.setTextSize(largeSize);
+                chronoPaint.setTextSize(normalSize);
+                logoTextPaint.setTextSize(normalSize);
             }
         }
 
@@ -223,25 +233,21 @@ public class F35Face extends CanvasWatchFaceService {
             smallTextPaint.setAntiAlias(true);
             smallTextPaint.setTextAlign(Paint.Align.CENTER);
             smallTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita Heavy Bold.ttf"));
-            smallTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_small));
 
             largeTextPaint = new Paint();
             largeTextPaint.setAntiAlias(true);
             largeTextPaint.setTextAlign(Paint.Align.CENTER);
             largeTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
-            largeTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_large));
 
             mediumTextPaint = new Paint();
             mediumTextPaint.setAntiAlias(true);
             mediumTextPaint.setTextAlign(Paint.Align.CENTER);
             mediumTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
-            mediumTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_medium));
 
             normalTextPaint = new Paint();
             normalTextPaint.setAntiAlias(true);
             normalTextPaint.setTextAlign(Paint.Align.CENTER);
             normalTextPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita.ttf"));
-            normalTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
 
             accentFillPaint= new Paint();
             accentFillPaint.setAntiAlias(true);
@@ -251,7 +257,6 @@ public class F35Face extends CanvasWatchFaceService {
             chronoPaint= new Paint();
             chronoPaint.setAntiAlias(true);
             chronoPaint.setTextAlign(Paint.Align.CENTER);
-            chronoPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
             chronoPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita Heavy Bold.ttf"));
 
             complicationArcAccentPaint= new Paint();
@@ -270,7 +275,6 @@ public class F35Face extends CanvasWatchFaceService {
             logoTextPaint.setAntiAlias(true);
             logoTextPaint.setTextAlign(Paint.Align.CENTER);
             logoTextPaint.setTypeface(logoTypeface);
-            logoTextPaint.setTextSize(getResources().getDimension(R.dimen.font_size_logo_text));
 
             blackFillPaint = new Paint();
             blackFillPaint.setColor(Color.BLACK);
