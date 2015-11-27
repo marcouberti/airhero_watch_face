@@ -154,13 +154,13 @@ public class F35Face extends CanvasWatchFaceService {
         public void onApplyWindowInsets(WindowInsets insets) {
             super.onApplyWindowInsets(insets);
             mIsRound = insets.isRound();
-            /*
             if(mIsRound) {
-                mHandPaint.setTextSize(getResources().getDimension(R.dimen.font_size_time_round));
+                //set round bg images
+                //TODO
             }else{
-                mHandPaint.setTextSize(getResources().getDimension(R.dimen.font_size_time_square));
+                //set square bg images
+                //TODO
             }
-            */
         }
 
         @Override
@@ -284,7 +284,7 @@ public class F35Face extends CanvasWatchFaceService {
             mTime = new Time();
             mCalendar = Calendar.getInstance();
 
-            selectedColorCode = GradientsUtils.getGradients(getApplicationContext(), 0);
+            selectedColorCode = GradientsUtils.getGradients(getApplicationContext(), -1);
 
             updatePaintColors();
         }
@@ -360,7 +360,9 @@ public class F35Face extends CanvasWatchFaceService {
             canvas.drawBitmap(bg, src, bounds, whiteFillPaint);
 
             //Accent triangle
-            drawTopTriangle(canvas, width, height);
+            if(!mAmbient) {
+                drawTopTriangle(canvas, width, height);
+            }
 
             //LOGO TEXT
             if(!mAmbient) {
@@ -403,11 +405,7 @@ public class F35Face extends CanvasWatchFaceService {
             canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.35F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
             canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mDarkSecondsCirclePaint);
             if (!mAmbient) {
-                if(NIGHT_MODE == NIGHT_MODE_OFF) {
-                    canvas.drawCircle(width / 2, (height / 2F) * 0.375F, ScreenUtils.convertDpToPixels(getApplicationContext(), 2F), accentFillPaint);
-                }else {
-                    canvas.drawCircle(width / 2, (height / 2F) * 0.375F, ScreenUtils.convertDpToPixels(getApplicationContext(), 2F), blackFillPaint);
-                }
+                canvas.drawCircle(width / 2, (height / 2F) * 0.38F, ScreenUtils.convertDpToPixels(getApplicationContext(), 2.5F), accentFillPaint);
             }
             canvas.restore();
             //END Hours hand
@@ -429,7 +427,12 @@ public class F35Face extends CanvasWatchFaceService {
             //Red center circle
             if(!mAmbient && NIGHT_MODE == NIGHT_MODE_OFF) {
                 canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), accentFillPaint);
-            }else {
+            }else if(!mAmbient && NIGHT_MODE == NIGHT_MODE_ON) {
+                canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), accentFillPaint);
+            }
+            else if(mAmbient && NIGHT_MODE == NIGHT_MODE_OFF){
+                canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), blackFillPaint);
+            }else if(mAmbient && NIGHT_MODE == NIGHT_MODE_ON){
                 canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), blackFillPaint);
             }
 
@@ -439,7 +442,13 @@ public class F35Face extends CanvasWatchFaceService {
             float LX = width*0.3530f;
             float LY = height*0.6220f;
 
-            if(LEFT_COMPLICATION_MODE == MOON) {
+            if(LEFT_COMPLICATION_MODE == CHRONO
+                    || RIGHT_COMPLICATION_MODE == CHRONO) {
+                String text = "START";
+                if(stopWatch.running) text = "PAUSE";
+                else if(stopWatch.paused) text = "RESUME";
+                drawStopWatch(canvas, text, width, height, LX, LY);
+            }else if(LEFT_COMPLICATION_MODE == MOON) {
                 drawMoonPhase(canvas, width, height, LX, LY);
             }else if(LEFT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) {
                 drawWeekDays(canvas, width, height, LX, LY);
@@ -449,11 +458,6 @@ public class F35Face extends CanvasWatchFaceService {
                 drawMonthAndDay(canvas, width, height, LX, LY);
             }else if(LEFT_COMPLICATION_MODE == MONTH_AND_YEAR) {
                 drawMonthAndYear(canvas, width, height, LX, LY);
-            }else if(LEFT_COMPLICATION_MODE == CHRONO) {
-                String text = "START";
-                if(stopWatch.running) text = "PAUSE";
-                else if(stopWatch.paused) text = "STOP";
-                drawStopWatch(canvas,text, width, height, LX, LY);
             }else if(LEFT_COMPLICATION_MODE == WEAR_BATTERY) {
                 drawBatteryWear(canvas, width, height, LX, LY);
             }
@@ -465,8 +469,12 @@ public class F35Face extends CanvasWatchFaceService {
 
             //draw bg circle
             //canvas.drawCircle(RX,RY,CR,blackFillPaint);
-
-            if(RIGHT_COMPLICATION_MODE == MOON) {
+            if(LEFT_COMPLICATION_MODE == CHRONO
+                    || RIGHT_COMPLICATION_MODE == CHRONO) {
+                String text = "STOP";
+                drawStopWatch(canvas, text, width, height, RX, RY);
+            }
+            else if(RIGHT_COMPLICATION_MODE == MOON) {
                 drawMoonPhase(canvas, width, height, RX, RY);
             }else if(RIGHT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) {
                 drawWeekDays(canvas, width, height, RX, RY);
@@ -476,11 +484,6 @@ public class F35Face extends CanvasWatchFaceService {
                 drawMonthAndDay(canvas, width, height, RX, RY);
             }else if(RIGHT_COMPLICATION_MODE == MONTH_AND_YEAR) {
                 drawMonthAndYear(canvas, width, height, RX, RY);
-            }else if(RIGHT_COMPLICATION_MODE == CHRONO) {
-                String text = "START";
-                if(stopWatch.running) text = "PAUSE";
-                else if(stopWatch.paused) text = "STOP";
-                drawStopWatch(canvas,text, width, height, RX, RY);
             }else if(RIGHT_COMPLICATION_MODE == WEAR_BATTERY) {
                 drawBatteryWear(canvas, width, height, RX, RY);
             }
@@ -716,7 +719,10 @@ public class F35Face extends CanvasWatchFaceService {
             minutesPath.lineTo((width / 2) + TS, (height / 2) * 0.3f - TS * 1.9F);
             minutesPath.lineTo((width / 2), (height / 2) * 0.31f);
             minutesPath.close();
+            int previousColor = accentFillPaint.getColor();
+            if(NIGHT_MODE == NIGHT_MODE_ON) accentFillPaint.setColor(getResources().getColor(R.color.night_mode));
             canvas.drawPath(minutesPath, accentFillPaint);
+            accentFillPaint.setColor(previousColor);
         }
 
         private void drawTextLogo(Canvas canvas, String text, int width, int height) {
@@ -1017,8 +1023,14 @@ public class F35Face extends CanvasWatchFaceService {
         private void handleTouch(int x, int y) {
             int W = ScreenUtils.getScreenWidth(getApplicationContext());
             int H = ScreenUtils.getScreenHeight(getApplicationContext());
-            int DELTA_X =W/4;
-            int DELTA_Y = H/4;
+            int DELTA_X = (int)CR;
+            int DELTA_Y = (int)CR;
+
+            float LX = W*0.3530f;
+            float LY = H*0.6220f;
+
+            float RX = W*0.6420f;
+            float RY = H*0.6220f;
             //LEFT CENTER
             /*
             if(x <(W/4 + DELTA_X) && x >(W/4 - DELTA_X)) {
@@ -1046,29 +1058,25 @@ public class F35Face extends CanvasWatchFaceService {
             }
             */
             //LEFT BOTTOM
-            if(x <(W/4 + DELTA_X) && x >(W/4 - DELTA_X)) {
-                if(y >(H/2)) {
+            if(x <(LX + DELTA_X) && x >(LX - DELTA_X)) {
+                if(y >(LY -DELTA_Y) && y <(LY +DELTA_Y)) {
                     handleTouchLeftBottom();
                     return;
                 }
             }
             //RIGHT BOTTOM
-            if(x <(W*3/4 + DELTA_X) && x >(W*3/4 - DELTA_X)) {
-                if(y >(H/2)) {
+            if(x <(RX + DELTA_X) && x >(RX- DELTA_X)) {
+                if(y >(RY -DELTA_Y) && y <(RY +DELTA_Y)) {
                     handleTouchRightBottom();
                     return;
                 }
             }
-            //TOP CENTER
-            if(x <(W/2 + DELTA_X) && x >(W/2 - DELTA_X)) {
-                if(y <(H/4 + DELTA_Y) && y >(H/4 - DELTA_Y)) {
-                    handleTouchTopCenter();
-                    return;
-                }
-            }
+
+            handleTouchOther();
+
         }
 
-        private void handleTouchTopCenter() {
+        private void handleTouchOther() {
             if(NIGHT_MODE == NIGHT_MODE_ON) {
                 NIGHT_MODE = NIGHT_MODE_OFF;
 
@@ -1082,16 +1090,19 @@ public class F35Face extends CanvasWatchFaceService {
             bg.recycle();
             if(!mAmbient) {
                 if(NIGHT_MODE == NIGHT_MODE_ON) {
-                    bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_night);
-
+                    if(mIsRound) bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_night);
+                    else bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_night);
                 }else {
-                    bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
+                    if(mIsRound) bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
+                    else bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square);
                 }
             }else {
                 if(NIGHT_MODE == NIGHT_MODE_ON) {
-                    bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient_night);
+                    if(mIsRound) bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient_night);
+                    else bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_night_ambient);
                 }else {
-                    bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient);
+                    if(mIsRound) bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient);
+                    else bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_ambient);
                 }
             }
             updatePaintColors();
@@ -1121,10 +1132,10 @@ public class F35Face extends CanvasWatchFaceService {
             }else {
                 //accent
                 int nightColor = getResources().getColor(R.color.night_mode);
-                accentFillPaint.setColor(nightColor);
+                accentFillPaint.setColor(Color.DKGRAY);
                 chronoPaint.setColor(nightColor);
-                complicationArcAccentPaint.setColor(nightColor);
-                complicationArcBatteryPaint.setColor(nightColor);
+                complicationArcAccentPaint.setColor(Color.DKGRAY);
+                complicationArcBatteryPaint.setColor(Color.DKGRAY);
                 //white and gray colors
                 normalTextPaint.setColor(nightColor);
                 smallTextPaint.setColor(nightColor);
@@ -1150,43 +1161,18 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void handleTouchRightBottom() {
-            if(RIGHT_COMPLICATION_MODE == MOON) RIGHT_COMPLICATION_MODE =WEEK_DAYS_BATTERY;
+            if(RIGHT_COMPLICATION_MODE == CHRONO || LEFT_COMPLICATION_MODE == CHRONO) {
+                    stopWatch.stop();
+                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
+                    LEFT_COMPLICATION_MODE =MOON;
+                    updateTimer();
+            }
+            else if(RIGHT_COMPLICATION_MODE == MOON) RIGHT_COMPLICATION_MODE =WEEK_DAYS_BATTERY;
             else if(RIGHT_COMPLICATION_MODE == WEEK_DAYS_BATTERY) RIGHT_COMPLICATION_MODE =COORDINATES;
             else if(RIGHT_COMPLICATION_MODE == COORDINATES) RIGHT_COMPLICATION_MODE =MONTH_AND_DAY;
             else if(RIGHT_COMPLICATION_MODE == MONTH_AND_DAY) RIGHT_COMPLICATION_MODE =MONTH_AND_YEAR;
             else if(RIGHT_COMPLICATION_MODE == MONTH_AND_YEAR) RIGHT_COMPLICATION_MODE =WEAR_BATTERY;
-            else if(RIGHT_COMPLICATION_MODE == WEAR_BATTERY) RIGHT_COMPLICATION_MODE =CHRONO;
-            else if(RIGHT_COMPLICATION_MODE == CHRONO) {
-
-                String chrono;
-                int millis;
-                if(stopWatch.paused) {
-                    chrono = lastStopWatchValue;
-                    millis = lastMillisValue;
-                }else {
-                    chrono = stopWatch.toString();
-                    millis = (int)stopWatch.getElapsedTimeMillis();
-                    lastStopWatchValue = chrono;
-                    lastMillisValue = millis;
-                    lastStopWatchSecondsValue = (int)stopWatch.getElapsedTimeSecs();
-                }
-
-                if(stopWatch.running) {
-                    stopWatch.pause();
-                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
-                    updateTimer();
-                }else if(stopWatch.paused) {
-                    stopWatch.stop();
-                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
-                    RIGHT_COMPLICATION_MODE =MOON;
-                    updateTimer();
-                }
-                else {
-                    stopWatch.start();
-                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_STOPWATCH;
-                    updateTimer();
-                }
-            }
+            else if(RIGHT_COMPLICATION_MODE == WEAR_BATTERY) RIGHT_COMPLICATION_MODE =MOON;
         }
 
         private void handleTouchLeftBottom() {
@@ -1216,9 +1202,8 @@ public class F35Face extends CanvasWatchFaceService {
                     INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
                     updateTimer();
                 }else if(stopWatch.paused) {
-                    stopWatch.stop();
-                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
-                    LEFT_COMPLICATION_MODE =MOON;
+                    stopWatch.resume();
+                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_STOPWATCH;
                     updateTimer();
                 }
                 else {
