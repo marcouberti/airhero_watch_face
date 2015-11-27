@@ -98,8 +98,10 @@ public class GradientsUtils {
         else if (colorID == 21) {
             return ctx.getResources().getColor(R.color.col_22);
         }
-        else {
+        else if (colorID == 22){
             return ctx.getResources().getColor(R.color.col_23);
+        }else {
+            return ctx.getResources().getColor(R.color.col_4);
         }
     }
 

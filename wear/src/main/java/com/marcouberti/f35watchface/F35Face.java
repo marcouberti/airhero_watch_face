@@ -14,11 +14,9 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.BatteryManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.wearable.activity.ConfirmationActivity;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
@@ -26,7 +24,6 @@ import android.text.format.Time;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -53,7 +50,6 @@ import com.marcouberti.f35watchface.utils.stopwatch.StopWatch;
 
 import java.lang.ref.WeakReference;
 import java.text.DateFormatSymbols;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Set;
@@ -120,7 +116,7 @@ public class F35Face extends CanvasWatchFaceService {
         Paint mSecondsCirclePaint,mDarkSecondsCirclePaint, smallTextPaint;
         Paint logoTextPaint;
         Paint blackFillPaint, whiteFillPaint, darkGrayFillPaint;
-        Paint accentFillPaint;
+        Paint accentFillPaint, chronoPaint;
         Paint complicationArcAccentPaint,complicationArcBatteryPaint;
         Paint largeTextPaint, mediumTextPaint, normalTextPaint;
         boolean mAmbient;
@@ -209,7 +205,6 @@ public class F35Face extends CanvasWatchFaceService {
             mSecondsCirclePaint.setAntiAlias(true);
             mSecondsCirclePaint.setStyle(Paint.Style.FILL);
             mSecondsCirclePaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 3f));
-            mSecondsCirclePaint.setShadowLayer(2, 1, 1, Color.BLACK);
 
             mDarkSecondsCirclePaint= new Paint();
             mDarkSecondsCirclePaint.setAntiAlias(true);
@@ -245,16 +240,22 @@ public class F35Face extends CanvasWatchFaceService {
             accentFillPaint.setTextAlign(Paint.Align.CENTER);
             accentFillPaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 1.5f));
 
+            chronoPaint= new Paint();
+            chronoPaint.setAntiAlias(true);
+            chronoPaint.setTextAlign(Paint.Align.CENTER);
+            chronoPaint.setTextSize(getResources().getDimension(R.dimen.font_size_normal));
+            chronoPaint.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/Dolce Vita Heavy Bold.ttf"));
+
             complicationArcAccentPaint= new Paint();
             complicationArcAccentPaint.setStyle(Paint.Style.STROKE);
             complicationArcAccentPaint.setStrokeCap(Paint.Cap.BUTT);
-            complicationArcAccentPaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 3));
+            complicationArcAccentPaint.setStrokeWidth(ScreenUtils.getScreenWidth(getApplicationContext()) / 50);
             complicationArcAccentPaint.setAntiAlias(true);
 
             complicationArcBatteryPaint= new Paint();
             complicationArcBatteryPaint.setStyle(Paint.Style.STROKE);
             complicationArcBatteryPaint.setStrokeCap(Paint.Cap.BUTT);
-            complicationArcBatteryPaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 10));
+            complicationArcBatteryPaint.setStrokeWidth(ScreenUtils.getScreenWidth(getApplicationContext()) / 20);
             complicationArcBatteryPaint.setAntiAlias(true);
 
             logoTextPaint= new Paint();
@@ -314,6 +315,7 @@ public class F35Face extends CanvasWatchFaceService {
                 if (mLowBitAmbient) {
                     //mHandPaint.setAntiAlias(!inAmbientMode);
                 }
+                updateBackground();
                 invalidate();
             }
 
@@ -354,32 +356,23 @@ public class F35Face extends CanvasWatchFaceService {
             final float hoursRotation = (mCalendar.get(Calendar.HOUR) * 30) + hourHandOffset;
 
             //BACKGROUND
-            if (!mAmbient) {
-                //Draw bg bitmap
-                Rect src = new Rect(0,0, bg.getWidth(), bg.getHeight());
-                canvas.drawBitmap(bg, src, bounds, whiteFillPaint);
-            }else {//AMBIENT MODE
-                //BLACK BG TO SAVE ENERGY
-                canvas.drawColor(Color.BLACK);
-            }
-
+            Rect src = new Rect(0,0, bg.getWidth(), bg.getHeight());
+            canvas.drawBitmap(bg, src, bounds, whiteFillPaint);
 
             //Accent triangle
-            if (!mAmbient) {
-                drawTopTriangle(canvas, width, height);
-            }
+            drawTopTriangle(canvas, width, height);
 
             //LOGO TEXT
-            logoTextPaint.setTypeface(monospacedTypeface);
-            if(stopWatch.running) {
-                drawTextLogo(canvas, stopWatch.toString()+"."+String.format("%03d",stopWatch.getElapsedTimeMillis()), width, height);
-            }
-            else if(stopWatch.paused) {
-                drawTextLogo(canvas, lastStopWatchValue+"."+lastMillisValue, width, height);
-            }
-            else {
-                logoTextPaint.setTypeface(logoTypeface);
-                drawTextLogo(canvas, "F-35", width, height);
+            if(!mAmbient) {
+                logoTextPaint.setTypeface(monospacedTypeface);
+                if (stopWatch.running) {
+                    drawTextLogo(canvas, stopWatch.toString() + "." + String.format("%03d", stopWatch.getElapsedTimeMillis()), width, height);
+                } else if (stopWatch.paused) {
+                    drawTextLogo(canvas, lastStopWatchValue + "." + lastMillisValue, width, height);
+                } else {
+                    logoTextPaint.setTypeface(logoTypeface);
+                    drawTextLogo(canvas, "F-35", width, height);
+                }
             }
             //END LOGO TEXT
 
@@ -394,7 +387,7 @@ public class F35Face extends CanvasWatchFaceService {
 
             //Hands sizes and round rect readius
             int RR = ScreenUtils.convertDpToPixels(getApplicationContext(), 10);
-            int RRradius = ScreenUtils.convertDpToPixels(getApplicationContext(), 3f);
+            int RRradius = (int)((width/2f)/30);
 
             //Minutes hand
             canvas.save();
@@ -410,7 +403,11 @@ public class F35Face extends CanvasWatchFaceService {
             canvas.drawRoundRect(width / 2 - RRradius, (height / 2F) * 0.35F, width / 2 + RRradius, (height / 2f) * 0.85F, RR, RR, mSecondsCirclePaint);
             canvas.drawLine(width / 2, height / 2, width / 2, (height / 2F) * 0.35F, mDarkSecondsCirclePaint);
             if (!mAmbient) {
-                canvas.drawCircle(width / 2, (height / 2F) * 0.375F, ScreenUtils.convertDpToPixels(getApplicationContext(), 2F), accentFillPaint);
+                if(NIGHT_MODE == NIGHT_MODE_OFF) {
+                    canvas.drawCircle(width / 2, (height / 2F) * 0.375F, ScreenUtils.convertDpToPixels(getApplicationContext(), 2F), accentFillPaint);
+                }else {
+                    canvas.drawCircle(width / 2, (height / 2F) * 0.375F, ScreenUtils.convertDpToPixels(getApplicationContext(), 2F), blackFillPaint);
+                }
             }
             canvas.restore();
             //END Hours hand
@@ -430,7 +427,7 @@ public class F35Face extends CanvasWatchFaceService {
             //END seconds hand
 
             //Red center circle
-            if(!mAmbient) {
+            if(!mAmbient && NIGHT_MODE == NIGHT_MODE_OFF) {
                 canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), accentFillPaint);
             }else {
                 canvas.drawCircle(width / 2, height / 2, ScreenUtils.convertDpToPixels(getApplicationContext(), 3.5f), blackFillPaint);
@@ -595,8 +592,7 @@ public class F35Face extends CanvasWatchFaceService {
 
             Rect bounds = new Rect();
             normalTextPaint.getTextBounds(text, 0, text.length(), bounds);
-            normalTextPaint.setColor(accentFillPaint.getColor());
-            canvas.drawText(text, CX, CY + bounds.height() / 2, normalTextPaint);
+            canvas.drawText(text, CX, CY + bounds.height() / 2, chronoPaint);
         }
 
         private void drawMonthAndDay(Canvas canvas, int width, int height, float CX, float CY) {
@@ -766,6 +762,7 @@ public class F35Face extends CanvasWatchFaceService {
             // Whether the timer should be running depends on whether we're visible (as well as
             // whether we're in ambient mode), so we may need to start or stop the timer.
             updateTimer();
+            updateBackground();
         }
 
         private void setupF35Wearable() {
@@ -1072,17 +1069,30 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void handleTouchTopCenter() {
-            nightModeOnOff();
-        }
-
-        private void nightModeOnOff() {
             if(NIGHT_MODE == NIGHT_MODE_ON) {
-                bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
                 NIGHT_MODE = NIGHT_MODE_OFF;
 
             }else {
-                bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_night);
                 NIGHT_MODE = NIGHT_MODE_ON;
+            }
+            updateBackground();
+        }
+
+        private void updateBackground() {
+            bg.recycle();
+            if(!mAmbient) {
+                if(NIGHT_MODE == NIGHT_MODE_ON) {
+                    bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_night);
+
+                }else {
+                    bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
+                }
+            }else {
+                if(NIGHT_MODE == NIGHT_MODE_ON) {
+                    bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient_night);
+                }else {
+                    bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient);
+                }
             }
             updatePaintColors();
         }
@@ -1090,7 +1100,12 @@ public class F35Face extends CanvasWatchFaceService {
         private void updatePaintColors() {
             if(NIGHT_MODE == NIGHT_MODE_OFF) {
                 //accent colors
-                accentFillPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
+                if(mAmbient) {
+                    accentFillPaint.setColor(Color.WHITE);
+                }else {
+                    accentFillPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
+                }
+                chronoPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 complicationArcAccentPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 complicationArcBatteryPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 //white and gray colors
@@ -1107,6 +1122,7 @@ public class F35Face extends CanvasWatchFaceService {
                 //accent
                 int nightColor = getResources().getColor(R.color.night_mode);
                 accentFillPaint.setColor(nightColor);
+                chronoPaint.setColor(nightColor);
                 complicationArcAccentPaint.setColor(nightColor);
                 complicationArcBatteryPaint.setColor(nightColor);
                 //white and gray colors
@@ -1115,10 +1131,17 @@ public class F35Face extends CanvasWatchFaceService {
                 mediumTextPaint.setColor(nightColor);
                 largeTextPaint.setColor(nightColor);
                 logoTextPaint.setColor(nightColor);
-                mSecondsCirclePaint.setColor(Color.DKGRAY);
-                mDarkSecondsCirclePaint.setColor(Color.DKGRAY);
+                mSecondsCirclePaint.setColor(nightColor);
+                mDarkSecondsCirclePaint.setColor(nightColor);
                 whiteFillPaint.setColor(nightColor);
                 //darkGrayFillPaint.setColor(nightColor);
+            }
+
+            //Ambient mode
+            if(mAmbient) {
+                mSecondsCirclePaint.setShadowLayer(0, 0, 0, Color.BLACK);
+            }else {
+                mSecondsCirclePaint.setShadowLayer(2, 1, 1, Color.BLACK);
             }
         }
 
