@@ -17,7 +17,7 @@ import android.view.View;
 public class CustomGradientView extends CircledImageView {
 
     Paint paint = new Paint();
-    int color = Color.BLACK;
+    int color;
 
     public CustomGradientView(Context context) {
         super(context);
@@ -36,6 +36,7 @@ public class CustomGradientView extends CircledImageView {
 
     private void initPaint(Context ctx){
         paint.setAntiAlias(true);
+        color = ctx.getResources().getColor(R.color.col_4);
     }
 
     @Override

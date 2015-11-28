@@ -378,13 +378,17 @@ public class F35Face extends CanvasWatchFaceService {
 
             //LOGO TEXT
             if(!mAmbient) {
+                float smallSize = ScreenUtils.getScreenWidth(getApplicationContext())/20f;
+                float normalSize = ScreenUtils.getScreenWidth(getApplicationContext())/17f;
                 logoTextPaint.setTypeface(monospacedTypeface);
+                logoTextPaint.setTextSize(normalSize);
                 if (stopWatch.running) {
                     drawTextLogo(canvas, stopWatch.toString() + "." + String.format("%03d", stopWatch.getElapsedTimeMillis()), width, height);
                 } else if (stopWatch.paused) {
                     drawTextLogo(canvas, lastStopWatchValue + "." + lastMillisValue, width, height);
                 } else {
                     logoTextPaint.setTypeface(logoTypeface);
+                    logoTextPaint.setTextSize(smallSize);
                     drawTextLogo(canvas, "AIRHERO", width, height);
                 }
             }
