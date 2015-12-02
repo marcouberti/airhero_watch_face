@@ -14,15 +14,15 @@
     <string name="col_10">Silver</string>
 
     <string-array name="gradients_face_array">
+        <item>@string/col_4</item>
+        <item>@string/col_7</item>
+        <item>@string/col_9</item>
         <item>@string/col_1</item>
         <item>@string/col_2</item>
         <item>@string/col_3</item>
-        <item>@string/col_4</item>
         <item>@string/col_5</item>
         <item>@string/col_6</item>
-        <item>@string/col_7</item>
         <item>@string/col_8</item>
-        <item>@string/col_9</item>
         <item>@string/col_10</item>
     </string-array>
 </resources>

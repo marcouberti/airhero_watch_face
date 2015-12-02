@@ -7,8 +7,13 @@
 
     <string name="wear_config_name">Choose a color</string>
     <string name="background_gradients">Color</string>
-    <string name="rate_this_app">I like this watch face!</string>
+    <string name="rate_this_app">RATE THIS APP</string>
     <string name="see_other_apps">Explore more</string>
+    <string name="accent_color">Accent color</string>
+    <string name="other_configs">Configurations</string>
+    <string name="secondary_timezone">Secondary timezone</string>
+
+    <!-- Accent color -->
     <string name="col_1">Blue</string>
     <string name="col_2">Violet</string>
     <string name="col_3">Yellow</string>
@@ -21,15 +26,15 @@
     <string name="col_10">Silver</string>
 
     <string-array name="gradients_face_array">
+        <item>@string/col_4</item>
+        <item>@string/col_7</item>
+        <item>@string/col_9</item>
         <item>@string/col_1</item>
         <item>@string/col_2</item>
         <item>@string/col_3</item>
-        <item>@string/col_4</item>
         <item>@string/col_5</item>
         <item>@string/col_6</item>
-        <item>@string/col_7</item>
         <item>@string/col_8</item>
-        <item>@string/col_9</item>
         <item>@string/col_10</item>
     </string-array>
 

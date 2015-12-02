@@ -33,7 +33,7 @@ public final class WatchFaceUtil {
     private static final String TAG = "FaceUtil";
 
 
-    public static final String KEY_TIMESTAMP = "KEY_TIMESTAMP";
+    //public static final String KEY_TIMESTAMP = "KEY_TIMESTAMP";
 
     /**
      * The {@link DataMap} key for {@link F35Face} background color name.
@@ -62,7 +62,7 @@ public final class WatchFaceUtil {
     /**
      * The path for the {@link DataItem} containing {@link F35Face} configuration.
      */
-    public static final String PATH_WITH_FEATURE = "/watch_face_config/lineswf";
+    public static final String PATH_WITH_FEATURE = "/f35wf";
 
     /**
      * Name of the default interactive mode background color and the ambient mode background color.

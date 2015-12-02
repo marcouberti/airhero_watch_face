@@ -32,7 +32,7 @@ import com.google.android.gms.wearable.Wearable;
 public final class WatchFaceUtil {
     private static final String TAG = "FaceUtil";
 
-    public static final String KEY_TIMESTAMP = "KEY_TIMESTAMP";
+    //public static final String KEY_TIMESTAMP = "KEY_TIMESTAMP";
     public static final String KEY_BACKGROUND_COLOR = "BACKGROUND_COLOR";
 
     public static final String KEY_HOURS_COLOR = "HOURS_COLOR";
@@ -41,7 +41,7 @@ public final class WatchFaceUtil {
 
     public static final String KEY_SECONDS_COLOR = "SECONDS_COLOR";
 
-    public static final String PATH_WITH_FEATURE = "/watch_face_config/lineswf";
+    public static final String PATH_WITH_FEATURE = "/f35wf";
 
     /**
      * Name of the default interactive mode background color and the ambient mode background color.

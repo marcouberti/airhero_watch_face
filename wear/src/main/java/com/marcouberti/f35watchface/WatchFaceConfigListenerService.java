@@ -46,9 +46,7 @@ public class WatchFaceConfigListenerService extends WearableListenerService
         // It's allowed that the message carries only some of the keys used in the config DataItem
         // and skips the ones that we don't want to change.
         DataMap configKeysToOverwrite = DataMap.fromByteArray(rawData);
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Received watch face config message: " + configKeysToOverwrite);
-        }
+        Log.d(TAG, "Received watch face config message: " + configKeysToOverwrite);
 
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(this)

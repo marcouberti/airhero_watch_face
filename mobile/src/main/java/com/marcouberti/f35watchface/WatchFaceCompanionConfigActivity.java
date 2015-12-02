@@ -16,9 +16,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -33,6 +32,7 @@ import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
+import com.marcouberti.f35watchface.utils.TimeZoneUtils;
 
 import java.util.Date;
 
@@ -43,10 +43,8 @@ import java.util.Date;
  */
 public class WatchFaceCompanionConfigActivity extends Activity
         implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        ResultCallback<DataApi.DataItemResult>,DataApi.DataListener {
-    private static final String TAG = "IrisWatchFaceConfig";
-
-    // TODO: use the shared constants (needs covering all the samples with Gradle build model)
+        ResultCallback<DataApi.DataItemResult>, DataApi.DataListener{
+    private static final String TAG = "AirheroFaceConfig";
 
     private GoogleApiClient mGoogleApiClient;
     private String mPeerId;
@@ -54,9 +52,11 @@ public class WatchFaceCompanionConfigActivity extends Activity
     private Toolbar toolbar;
 
     protected RecyclerView recyclerView;
-    private GradientAdapter adapter;
+    private ConfigListAdapter adapter;
     private RecyclerView.LayoutManager robotLayoutManager;
     CustomGradientView previewView;
+
+    ConfigListModel listModel = new ConfigListModel();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,21 +81,21 @@ public class WatchFaceCompanionConfigActivity extends Activity
                 finish();
             }
         });
-        /*
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.action_refresh) {
-                    if(dashboardFragment != null) {
-                        ((DashboardFragment)dashboardFragment).reloadRobotList(true);
-                    }
-                }
-                return true;
-            }
-        });
-        */
 
         previewView = (CustomGradientView)findViewById(R.id.gradient);
+
+        //CREATE LIST MODEL
+        listModel.addItem(new ConfigListModel.GroupItem(R.string.other_configs));
+        listModel.addItem(new ConfigListModel.SecondTimezoneItem());
+        listModel.addItem(new ConfigListModel.GroupItem(R.string.accent_color));
+        String[] availableColors = getResources().getStringArray(R.array.gradients_face_array);
+        for (String colorName : availableColors) {
+            listModel.addItem(new ConfigListModel.AccentColorItem(colorName, GradientsUtils.getColorID(colorName)));
+        }
+        listModel.addItem(new ConfigListModel.SeparatorItem());
+
+        listModel.addItem(new ConfigListModel.RateAppItem(R.string.rate_this_app));
+        //END CREATE LIST MODEL
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
@@ -105,7 +105,7 @@ public class WatchFaceCompanionConfigActivity extends Activity
         robotLayoutManager = new LinearLayoutManager(this);
         //robotLayoutManager = new GridLayoutManager(getActivity(),2);
         recyclerView.setLayoutManager(robotLayoutManager);
-        adapter = new GradientAdapter();
+        adapter = new ConfigListAdapter();
         recyclerView.setAdapter(adapter);
     }
 
@@ -123,6 +123,13 @@ public class WatchFaceCompanionConfigActivity extends Activity
         super.onStop();
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Wearable.DataApi.removeListener(mGoogleApiClient, this);
+        mGoogleApiClient.disconnect();
+    }
+
     @Override // GoogleApiClient.ConnectionCallbacks
     public void onConnected(Bundle connectionHint) {
         Log.d(TAG, "onConnected: " + connectionHint);
@@ -132,54 +139,9 @@ public class WatchFaceCompanionConfigActivity extends Activity
             Uri uri = builder.scheme("wear").path(WatchFaceUtil.PATH_WITH_FEATURE).authority(mPeerId).build();
             Wearable.DataApi.getDataItem(mGoogleApiClient, uri).setResultCallback(this);
             Wearable.DataApi.addListener(mGoogleApiClient, this);
-
         } else {
             displayNoConnectedDeviceDialog();
         }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Wearable.DataApi.removeListener(mGoogleApiClient, this);
-        mGoogleApiClient.disconnect();
-    }
-
-    private void updateConfigDataItemAndUiOnStartup() {
-
-        Log.d(TAG, "updateConfigDataItemAndUiOnStartup...");
-
-        PendingResult<DataItemBuffer> results = Wearable.DataApi.getDataItems(mGoogleApiClient);
-        results.setResultCallback(new ResultCallback<DataItemBuffer>() {
-            @Override
-            public void onResult(DataItemBuffer dataItems) {
-                if (dataItems.getCount() != 0) {
-                    DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItems.get(0));
-
-                    // This should read the correct value.
-                    int value = dataMapItem.getDataMap().getInt(WatchFaceUtil.KEY_BACKGROUND_COLOR);
-                    updateUiForKey(WatchFaceUtil.KEY_BACKGROUND_COLOR, value);
-                    Log.d(TAG, "aggiorno a startup background...");
-                }
-
-                dataItems.release();
-            }
-        });
-
-        /*
-        WatchFaceUtil.fetchConfigDataMap(mGoogleApiClient,
-                new WatchFaceUtil.FetchConfigDataMapCallback() {
-                    @Override
-                    public void onConfigDataMapFetched(DataMap startupConfig) {
-                        // If the DataItem hasn't been created yet or some keys are missing,
-                        // use the default values.
-                        WatchFaceUtil.putConfigDataItem(mGoogleApiClient, startupConfig);
-
-                        updateUiForConfigDataMap(startupConfig);
-                    }
-                }
-        );
-        */
     }
 
     @Override // ResultCallback<DataApi.DataItemResult>
@@ -225,7 +187,7 @@ public class WatchFaceCompanionConfigActivity extends Activity
     private void sendConfigUpdateMessage(String configKey, int color) {
         if (mPeerId != null) {
             DataMap config = new DataMap();
-            config.putLong(WatchFaceUtil.KEY_TIMESTAMP, new Date().getTime());
+            //config.putLong(WatchFaceUtil.KEY_TIMESTAMP, new Date().getTime());
             config.putInt(configKey, color);
             byte[] rawData = config.toByteArray();
             Wearable.MessageApi.sendMessage(mGoogleApiClient, mPeerId, WatchFaceUtil.PATH_WITH_FEATURE, rawData);
@@ -234,27 +196,6 @@ public class WatchFaceCompanionConfigActivity extends Activity
                 Log.d(TAG, "Sent watch face config message: " + configKey + " -> "
                         + Integer.toHexString(color));
             }
-        }
-    }
-
-    @Override // DataApi.DataListener
-    public void onDataChanged(DataEventBuffer dataEvents) {
-        for (DataEvent dataEvent : dataEvents) {
-            if (dataEvent.getType() != DataEvent.TYPE_CHANGED) {
-                continue;
-            }
-
-            DataItem dataItem = dataEvent.getDataItem();
-            if (!dataItem.getUri().getPath().equals(WatchFaceUtil.PATH_WITH_FEATURE)) {
-                continue;
-            }
-
-            DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
-            DataMap config = dataMapItem.getDataMap();
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Config DataItem updated:" + config);
-            }
-            updateUiForConfigDataMap(config);
         }
     }
 
@@ -283,6 +224,7 @@ public class WatchFaceCompanionConfigActivity extends Activity
      * @return whether UI has been updated
      */
     private boolean updateUiForKey(String configKey, final int color) {
+        Log.d(TAG,"updateUiForKey "+configKey+ " color = "+color);
         if (configKey.equals(WatchFaceUtil.KEY_BACKGROUND_COLOR)) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -298,7 +240,37 @@ public class WatchFaceCompanionConfigActivity extends Activity
         return true;
     }
 
-    public void rateThisAppClick(View view) {
+    public void openTimezoneDialog() {
+        AlertDialog.Builder builderSingle = new AlertDialog.Builder(WatchFaceCompanionConfigActivity.this);
+        builderSingle.setTitle(getString(R.string.secondary_timezone));
+
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                WatchFaceCompanionConfigActivity.this,
+                android.R.layout.select_dialog_singlechoice);
+        arrayAdapter.addAll(TimeZoneUtils.getAllTimezones());
+
+        builderSingle.setNegativeButton(
+                "Cancel",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        builderSingle.setAdapter(
+                arrayAdapter,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String strName = arrayAdapter.getItem(which);
+
+                    }
+                });
+        builderSingle.show();
+    }
+
+    public void rateThisAppClick() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse("market://details?id=com.marcouberti.f35watchface"));
         startActivity(intent);
@@ -310,22 +282,38 @@ public class WatchFaceCompanionConfigActivity extends Activity
         startActivity(intent);
     }
 
-    public class GradientAdapter extends RecyclerView.Adapter<GradientAdapter.ViewHolder> {
+    @Override // DataApi.DataListener
+    public void onDataChanged(DataEventBuffer dataEvents) {
+        Log.d(TAG,"onDataChanged "+dataEvents);
+        for (DataEvent dataEvent : dataEvents) {
+            if (dataEvent.getType() != DataEvent.TYPE_CHANGED) {
+                continue;
+            }
+
+            DataItem dataItem = dataEvent.getDataItem();
+            if (!dataItem.getUri().getPath().equals(WatchFaceUtil.PATH_WITH_FEATURE)) {
+                continue;
+            }
+
+            DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
+            DataMap config = dataMapItem.getDataMap();
+            Log.d(TAG, "Config DataItem updated:" + config);
+
+            updateUiForConfigDataMap(config);
+        }
+    }
 
 
-        String[] gradients = getResources().getStringArray(R.array.gradients_face_array);
+    public class ConfigListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-        // Provide a reference to the views for each data item
-        // Complex data items may need more than one view per item, and
-        // you provide access to all the views for a data item in a view holder
-        public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        public class AccentColorViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
             // each data item is just a string in this case
             public RelativeLayout itemContainer;
             public TextView nameText;
             public CustomGradientView gradientView;
 
 
-            public ViewHolder(RelativeLayout v) {
+            public AccentColorViewHolder(RelativeLayout v) {
                 super(v);
                 v.setOnClickListener(this);
                 itemContainer = v;
@@ -336,47 +324,157 @@ public class WatchFaceCompanionConfigActivity extends Activity
             public void onClick(View view) {
                     //position
                     int itemPosition = getAdapterPosition();
-                    Log.d(TAG, "clicked position " + itemPosition);
-                    String gradientName = gradients[itemPosition];
-                    previewView.color = GradientsUtils.getGradients(getApplicationContext(),gradientName);
+                    ConfigListModel.AccentColorItem item = (ConfigListModel.AccentColorItem)listModel.getItemByAbsoluteIndex(itemPosition);
+
+                    Log.d(TAG, "clicked position " + itemPosition + " with color "+ item.colorID + "color name = "+item.colorName);
+                    previewView.color = GradientsUtils.getGradients(getApplicationContext(),item.colorName);
                     previewView.invalidate();
-                    sendConfigUpdateMessage(WatchFaceUtil.KEY_BACKGROUND_COLOR, GradientsUtils.getColorID(gradientName));
+                    sendConfigUpdateMessage(WatchFaceUtil.KEY_BACKGROUND_COLOR, GradientsUtils.getColorID(item.colorName));
+            }
+        }
+
+        public class SecondaryTimezoneViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+            // each data item is just a string in this case
+            public RelativeLayout itemContainer;
+
+            public SecondaryTimezoneViewHolder(RelativeLayout v) {
+                super(v);
+                v.setOnClickListener(this);
+                itemContainer = v;
+            }
+            @Override
+            public void onClick(View view) {
+                openTimezoneDialog();
+            }
+        }
+
+        public class RateAppViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+            // each data item is just a string in this case
+            public RelativeLayout itemContainer;
+
+            public RateAppViewHolder(RelativeLayout v) {
+                super(v);
+                v.setOnClickListener(this);
+                itemContainer = v;
+            }
+            @Override
+            public void onClick(View view) {
+                rateThisAppClick();
+            }
+        }
+
+        public class SeparatorViewHolder extends RecyclerView.ViewHolder{
+            // each data item is just a string in this case
+            public RelativeLayout itemContainer;
+
+            public SeparatorViewHolder(RelativeLayout v) {
+                super(v);
+                itemContainer = v;
+            }
+        }
+
+        public class FooterViewHolder extends RecyclerView.ViewHolder{
+            // each data item is just a string in this case
+            public RelativeLayout itemContainer;
+
+            public FooterViewHolder(RelativeLayout v) {
+                super(v);
+                itemContainer = v;
+            }
+        }
+
+        public class GroupViewHolder extends RecyclerView.ViewHolder{
+            // each data item is just a string in this case
+            public RelativeLayout itemContainer;
+            public TextView nameView;
+
+            public GroupViewHolder(RelativeLayout v) {
+                super(v);
+                itemContainer = v;
+                nameView = (TextView)v.findViewById(R.id.name);
             }
         }
 
         // Provide a suitable constructor (depends on the kind of dataset)
-        public GradientAdapter() {}
+        public ConfigListAdapter() {}
 
         // Create new views (invoked by the layout manager)
         @Override
-        public ViewHolder onCreateViewHolder(ViewGroup parent,
+        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                           int viewType) {
 
-            // create a new view
-            View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.gradient_item_list, parent, false);
-            // set the view's size, margins, paddings and layout parameters
-
-            GradientAdapter.ViewHolder vh = new GradientAdapter.ViewHolder((RelativeLayout) v);
-            return vh;
+            if(viewType == ConfigListModel.TYPE_ACCENT_COLOR) {
+                View v = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.config_list_accent_color_item, parent, false);
+                ConfigListAdapter.AccentColorViewHolder vh = new ConfigListAdapter.AccentColorViewHolder((RelativeLayout) v);
+                return vh;
+            }else if(viewType == ConfigListModel.TYPE_SECOND_TIMEZONE) {
+                View v = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.config_list_secondary_timezone, parent, false);
+                ConfigListAdapter.SecondaryTimezoneViewHolder vh = new ConfigListAdapter.SecondaryTimezoneViewHolder((RelativeLayout) v);
+                return vh;
+            }else if(viewType == ConfigListModel.TYPE_RATE_THIS_ASPP) {
+                View v = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.config_list_rate_app, parent, false);
+                ConfigListAdapter.RateAppViewHolder vh = new ConfigListAdapter.RateAppViewHolder((RelativeLayout) v);
+                return vh;
+            }else if(viewType == ConfigListModel.TYPE_GROUP) {
+                View v = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.config_list_group, parent, false);
+                ConfigListAdapter.GroupViewHolder vh = new ConfigListAdapter.GroupViewHolder((RelativeLayout) v);
+                return vh;
+            }
+            else if(viewType == ConfigListModel.TYPE_FOOTER) {
+                View v = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.config_list_footer, parent, false);
+                ConfigListAdapter.FooterViewHolder vh = new ConfigListAdapter.FooterViewHolder((RelativeLayout) v);
+                return vh;
+            }
+            else {
+                View v = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.config_list_separator, parent, false);
+                ConfigListAdapter.SeparatorViewHolder vh = new ConfigListAdapter.SeparatorViewHolder((RelativeLayout) v);
+                return vh;
+            }
         }
 
 
         // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(GradientAdapter.ViewHolder vh, final int position) {
+        public void onBindViewHolder(RecyclerView.ViewHolder vh, final int position) {
 
-                GradientAdapter.ViewHolder holder = (GradientAdapter.ViewHolder)vh;
+            if(vh instanceof AccentColorViewHolder) {
+                ConfigListAdapter.AccentColorViewHolder holder = (ConfigListAdapter.AccentColorViewHolder) vh;
+                ConfigListModel.AccentColorItem item = (ConfigListModel.AccentColorItem)listModel.getItemByAbsoluteIndex(position);
                 //defaults
-                holder.nameText.setText(gradients[position]);
-                holder.gradientView.color = GradientsUtils.getGradients(getApplicationContext(),gradients[position]);
+                holder.nameText.setText(item.colorName);
+                holder.gradientView.color = GradientsUtils.getGradients(getApplicationContext(), item.colorName);
+            }
+            else if(vh instanceof SeparatorViewHolder) {
+                //nothing to do
+            }
+            else if(vh instanceof GroupViewHolder) {
+                ConfigListAdapter.GroupViewHolder holder = (ConfigListAdapter.GroupViewHolder) vh;
+                ConfigListModel.GroupItem item = (ConfigListModel.GroupItem)listModel.getItemByAbsoluteIndex(position);
+                //defaults
+                holder.nameView.setText(getString(item.keyTitleRes));
+            }else if(vh instanceof SecondaryTimezoneViewHolder) {
+                //nothing to do
+            }else if(vh instanceof RateAppViewHolder) {
+                //nothing to do
+            }else if(vh instanceof FooterViewHolder) {
+                //nothing to do
+            }
         }
 
+        @Override
+        public int getItemViewType(int position) {
+            return listModel.getRowType(position);
+        }
 
-        // Return the size of your dataset (invoked by the layout manager)
         @Override
         public int getItemCount() {
-            return gradients.length;
+            return listModel.getTotalRowCount();
         }
 
     }

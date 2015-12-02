@@ -148,7 +148,7 @@ public class WatchFaceWearableConfigActivity extends Activity implements
 
     private void updateConfigDataItem(final int colorID) {
         DataMap configKeysToOverwrite = new DataMap();
-        configKeysToOverwrite.putLong(WatchFaceUtil.KEY_TIMESTAMP, new Date().getTime());
+        //configKeysToOverwrite.putLong(WatchFaceUtil.KEY_TIMESTAMP, new Date().getTime());
         configKeysToOverwrite.putInt(WatchFaceUtil.KEY_BACKGROUND_COLOR,
                 colorID);
         WatchFaceUtil.overwriteKeysInConfigDataMap(mGoogleApiClient, configKeysToOverwrite);

@@ -946,9 +946,8 @@ public class F35Face extends CanvasWatchFaceService {
 
                 DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
                 DataMap config = dataMapItem.getDataMap();
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Config DataItem updated:" + config);
-                }
+                Log.d(TAG, "Config DataItem updated:" + config);
+
                 updateUiForConfigDataMap(config);
             }
         }
@@ -1042,8 +1041,8 @@ public class F35Face extends CanvasWatchFaceService {
         private void handleTouch(int x, int y) {
             int W = ScreenUtils.getScreenWidth(getApplicationContext());
             int H = ScreenUtils.getScreenHeight(getApplicationContext());
-            int DELTA_X = (int)CR;
-            int DELTA_Y = (int)CR;
+            int DELTA_X = (int)(CR*1.5f);
+            int DELTA_Y = (int)(CR*1.5f);
 
             float LX = W*0.3530f;
             float LY = H*0.6220f;

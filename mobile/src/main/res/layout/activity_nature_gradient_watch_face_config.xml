@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     >
     <android.support.design.widget.CoordinatorLayout
-        android:layout_above="@+id/bottomContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
@@ -80,28 +79,4 @@
             app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
     </android.support.design.widget.CoordinatorLayout>
 
-    <LinearLayout
-        android:id="@+id/bottomContainer"
-        android:layout_gravity="bottom"
-        android:layout_alignParentBottom="true"
-        android:layout_width="match_parent"
-        android:background="@color/config_activity_background"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/rateButton"
-            android:padding="15dp"
-            android:layout_margin="10dp"
-            android:textColor="@color/white"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:background="@drawable/button_bg_accent"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:textAllCaps="false"
-            android:layout_height="wrap_content"
-            android:text="@string/rate_this_app"
-            android:onClick="rateThisAppClick"/>
-    </LinearLayout>
 </RelativeLayout>
