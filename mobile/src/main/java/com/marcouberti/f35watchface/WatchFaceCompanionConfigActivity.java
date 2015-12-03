@@ -57,6 +57,7 @@ public class WatchFaceCompanionConfigActivity extends Activity
     CustomGradientView previewView;
 
     ConfigListModel listModel = new ConfigListModel();
+    private String secondTimezoneId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,7 +151,7 @@ public class WatchFaceCompanionConfigActivity extends Activity
             DataItem configDataItem = dataItemResult.getDataItem();
             DataMapItem dataMapItem = DataMapItem.fromDataItem(configDataItem);
             DataMap config = dataMapItem.getDataMap();
-            Log.d(TAG,"startup setup UI...");
+            Log.d(TAG, "startup setup UI...");
             updateUiForConfigDataMap(config);
             //setUpAllPickers(config);
         } else {
@@ -184,17 +185,32 @@ public class WatchFaceCompanionConfigActivity extends Activity
         alert.show();
     }
 
-    private void sendConfigUpdateMessage(String configKey, int color) {
+    private void sendConfigUpdateMessage(String configKey, int value) {
         if (mPeerId != null) {
             DataMap config = new DataMap();
             //config.putLong(WatchFaceUtil.KEY_TIMESTAMP, new Date().getTime());
-            config.putInt(configKey, color);
+            config.putInt(configKey, value);
             byte[] rawData = config.toByteArray();
             Wearable.MessageApi.sendMessage(mGoogleApiClient, mPeerId, WatchFaceUtil.PATH_WITH_FEATURE, rawData);
 
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "Sent watch face config message: " + configKey + " -> "
-                        + Integer.toHexString(color));
+                        + Integer.toHexString(value));
+            }
+        }
+    }
+
+    private void sendConfigUpdateMessage(String configKey, String value) {
+        if (mPeerId != null) {
+            DataMap config = new DataMap();
+            //config.putLong(WatchFaceUtil.KEY_TIMESTAMP, new Date().getTime());
+            config.putString(configKey, value);
+            byte[] rawData = config.toByteArray();
+            Wearable.MessageApi.sendMessage(mGoogleApiClient, mPeerId, WatchFaceUtil.PATH_WITH_FEATURE, rawData);
+
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "Sent watch face config message: " + configKey + " -> "
+                        + value);
             }
         }
     }
@@ -207,14 +223,22 @@ public class WatchFaceCompanionConfigActivity extends Activity
             }
             if(configKey.equalsIgnoreCase(WatchFaceUtil.KEY_BACKGROUND_COLOR)) {
                 int color = config.getInt(configKey);
-                Log.d(TAG, "Found watch face config key: " + configKey + " -> "
-                        + color);
+                Log.d(TAG, "Found watch face config key: " + configKey + " -> " + color);
 
                 if (updateUiForKey(configKey, color)) {
                     uiUpdated = true;
                 }
             }
+            else if(configKey.equalsIgnoreCase(WatchFaceUtil.KEY_SECOND_TIMEZONE)) {
+                String timezoneID = config.getString(configKey);
+                Log.d(TAG, "Found watch face config key: " + configKey + " -> " + timezoneID);
+
+                if (updateUiForKey(configKey, timezoneID)) {
+                    uiUpdated = true;
+                }
+            }
         }
+        adapter.notifyDataSetChanged();
     }
 
     /**
@@ -233,6 +257,17 @@ public class WatchFaceCompanionConfigActivity extends Activity
                     previewView.invalidate();
                 }
             });
+        } else {
+            Log.w(TAG, "Ignoring unknown config key: " + configKey);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean updateUiForKey(String configKey, final String value) {
+        Log.d(TAG,"updateUiForKey "+configKey+ " value = "+value);
+        if (configKey.equals(WatchFaceUtil.KEY_SECOND_TIMEZONE)) {
+            secondTimezoneId = value;
         } else {
             Log.w(TAG, "Ignoring unknown config key: " + configKey);
             return false;
@@ -264,7 +299,11 @@ public class WatchFaceCompanionConfigActivity extends Activity
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         String strName = arrayAdapter.getItem(which);
-
+                        Log.d(TAG, "timezone selected ID = " + strName);
+                        //update data layer
+                        sendConfigUpdateMessage(WatchFaceUtil.KEY_SECOND_TIMEZONE,strName);
+                        secondTimezoneId = strName;
+                        adapter.notifyDataSetChanged();
                     }
                 });
         builderSingle.show();
@@ -336,11 +375,12 @@ public class WatchFaceCompanionConfigActivity extends Activity
         public class SecondaryTimezoneViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
             // each data item is just a string in this case
             public RelativeLayout itemContainer;
-
+            public TextView timezoneView;
             public SecondaryTimezoneViewHolder(RelativeLayout v) {
                 super(v);
                 v.setOnClickListener(this);
                 itemContainer = v;
+                timezoneView = (TextView)v.findViewById(R.id.timezone);
             }
             @Override
             public void onClick(View view) {
@@ -459,7 +499,10 @@ public class WatchFaceCompanionConfigActivity extends Activity
                 //defaults
                 holder.nameView.setText(getString(item.keyTitleRes));
             }else if(vh instanceof SecondaryTimezoneViewHolder) {
-                //nothing to do
+                ConfigListAdapter.SecondaryTimezoneViewHolder holder = (ConfigListAdapter.SecondaryTimezoneViewHolder) vh;
+                if(secondTimezoneId != null) {
+                    holder.timezoneView.setText(secondTimezoneId);
+                }
             }else if(vh instanceof RateAppViewHolder) {
                 //nothing to do
             }else if(vh instanceof FooterViewHolder) {

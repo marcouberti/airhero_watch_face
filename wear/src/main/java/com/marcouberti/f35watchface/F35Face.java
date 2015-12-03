@@ -100,6 +100,7 @@ public class F35Face extends CanvasWatchFaceService {
 
     int selectedColorCode;
     String lastKnowCoordinates = "0.00 / 0.00";
+    String secondTimezoneId;
 
     private StopWatch stopWatch = new StopWatch();
 
@@ -458,6 +459,11 @@ public class F35Face extends CanvasWatchFaceService {
             float LX = width*0.3530f;
             float LY = height*0.6220f;
 
+            if(true) {
+                drawSecondTimezone(canvas, width, height, LX, LY);
+                return;
+            }
+
             if(LEFT_COMPLICATION_MODE == CHRONO
                     || RIGHT_COMPLICATION_MODE == CHRONO) {
                 String text = "START";
@@ -631,6 +637,17 @@ public class F35Face extends CanvasWatchFaceService {
             largeTextPaint.getTextBounds(dayNumber, 0, dayNumber.length(), bounds);
             largeTextPaint.setColor(whiteFillPaint.getColor());
             canvas.drawText(dayNumber, CX, CY + bounds.height() / 2, largeTextPaint);
+            largeTextPaint.setColor(previousColor);
+        }
+
+        private void drawSecondTimezone(Canvas canvas, int width, int height, float CX, float CY) {
+
+            String timezoneID = secondTimezoneId==null?"--":secondTimezoneId;
+            Rect bounds = new Rect();
+            int previousColor = largeTextPaint.getColor();
+            largeTextPaint.getTextBounds(timezoneID, 0, timezoneID.length(), bounds);
+            largeTextPaint.setColor(whiteFillPaint.getColor());
+            canvas.drawText(timezoneID, CX, CY + bounds.height() / 2, largeTextPaint);
             largeTextPaint.setColor(previousColor);
         }
 
@@ -962,10 +979,17 @@ public class F35Face extends CanvasWatchFaceService {
                 if(configKey.equalsIgnoreCase(WatchFaceUtil.KEY_BACKGROUND_COLOR)) {
                     int color = config.getInt(configKey);
                     if (Log.isLoggable(TAG, Log.DEBUG)) {
-                        Log.d(TAG, "Found watch face config key: " + configKey + " -> "
-                                + color);
+                        Log.d(TAG, "Found watch face config key: " + configKey + " -> " + color);
                     }
                     if (updateUiForKey(configKey, color)) {
+                        uiUpdated = true;
+                    }
+                }else if(configKey.equalsIgnoreCase(WatchFaceUtil.KEY_SECOND_TIMEZONE)) {
+                    String timeZoneId = config.getString(configKey);
+                    if (Log.isLoggable(TAG, Log.DEBUG)) {
+                        Log.d(TAG, "Found watch face config key: " + configKey + " -> " + timeZoneId);
+                    }
+                    if (updateUiForKey(configKey, timeZoneId)) {
                         uiUpdated = true;
                     }
                 }
@@ -984,6 +1008,16 @@ public class F35Face extends CanvasWatchFaceService {
         private boolean updateUiForKey(String configKey, int color) {
             if (configKey.equals(WatchFaceUtil.KEY_BACKGROUND_COLOR)) {
                 setGradient(color);
+            } else {
+                Log.w(TAG, "Ignoring unknown config key: " + configKey);
+                return false;
+            }
+            return true;
+        }
+
+        private boolean updateUiForKey(String configKey, String value) {
+            if (configKey.equals(WatchFaceUtil.KEY_SECOND_TIMEZONE)) {
+                secondTimezoneId = value;
             } else {
                 Log.w(TAG, "Ignoring unknown config key: " + configKey);
                 return false;

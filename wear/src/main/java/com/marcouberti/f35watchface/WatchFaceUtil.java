@@ -33,7 +33,7 @@ public final class WatchFaceUtil {
     private static final String TAG = "FaceUtil";
 
 
-    //public static final String KEY_TIMESTAMP = "KEY_TIMESTAMP";
+    public static final String KEY_SECOND_TIMEZONE = "KEY_SECOND_TIMEZONE";
 
     /**
      * The {@link DataMap} key for {@link F35Face} background color name.
