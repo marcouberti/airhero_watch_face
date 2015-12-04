@@ -34,9 +34,9 @@
                     <com.marcouberti.f35watchface.CustomGradientView
                         android:id="@+id/gradient"
                         android:layout_centerInParent="true"
-                        app:circle_radius="110dp"
-                        android:layout_width="300dp"
-                        android:layout_height="300dp" />
+                        app:circle_radius="1110dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
                     <ImageView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
@@ -61,7 +61,7 @@
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
                         android:textSize="20dp"
-                        android:text="< Airhero Watch Face"/>
+                        android:text="Airhero Watch Face"/>
 
                 </android.support.v7.widget.Toolbar>
 
@@ -161,7 +161,7 @@
                     android:padding="@dimen/list_default_padding"
                     android:background="?attr/selectableItemBackground">
                     <com.marcouberti.f35watchface.CustomGradientView
-                        android:id="@+id/gradientS"
+                        android:id="@+id/gradientSn"
                         android:layout_alignParentLeft="true"
                         android:layout_centerVertical="true"
                         app:circle_radius="26dp"
@@ -169,9 +169,9 @@
                         android:layout_width="52dp"
                         android:layout_height="53dp" />
                     <TextView
-                        android:id="@+id/nameS"
+                        android:id="@+id/nameSn"
                         android:layout_marginLeft="@dimen/list_default_padding"
-                        android:layout_toRightOf="@+id/gradientS"
+                        android:layout_toRightOf="@+id/gradientSn"
                         android:layout_centerVertical="true"
                         android:textColor="@color/color_item_label_color"
                         android:fontFamily="sans-serif-light"

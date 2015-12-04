@@ -34,9 +34,9 @@
                     <com.marcouberti.f35watchface.CustomGradientView
                         android:id="@+id/gradient"
                         android:layout_centerInParent="true"
-                        app:circle_radius="110dp"
-                        android:layout_width="300dp"
-                        android:layout_height="300dp" />
+                        app:circle_radius="1110dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
                     <ImageView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
