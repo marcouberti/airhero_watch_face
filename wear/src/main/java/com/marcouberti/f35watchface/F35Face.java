@@ -52,6 +52,7 @@ import java.lang.ref.WeakReference;
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -215,7 +216,7 @@ public class F35Face extends CanvasWatchFaceService {
                             setViewProtectionMode(WatchFaceStyle.PROTECT_STATUS_BAR)
                     .build());
 
-            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
+            //bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setAntiAlias(true);
@@ -300,6 +301,7 @@ public class F35Face extends CanvasWatchFaceService {
             selectedColorCode = GradientsUtils.getGradients(getApplicationContext(), -1);
 
             updatePaintColors();
+            updateBackground();
         }
 
         @Override
@@ -369,6 +371,7 @@ public class F35Face extends CanvasWatchFaceService {
             final float hoursRotation = (mCalendar.get(Calendar.HOUR) * 30) + hourHandOffset;
 
             //BACKGROUND
+            if(bg == null) return;//wait unti bg is ready
             Rect src = new Rect(0,0, bg.getWidth(), bg.getHeight());
             canvas.drawBitmap(bg, src, bounds, whiteFillPaint);
 
@@ -643,11 +646,27 @@ public class F35Face extends CanvasWatchFaceService {
         private void drawSecondTimezone(Canvas canvas, int width, int height, float CX, float CY) {
 
             String timezoneID = secondTimezoneId==null?"--":secondTimezoneId;
+
+            TimeZone tz = TimeZone.getTimeZone(timezoneID);
+            if(tz == null) tz = TimeZone.getDefault();
+
+            String displayName = tz.getDisplayName(false, TimeZone.SHORT, Locale.getDefault());
+            canvas.save();
+            canvas.rotate(90, CX, CY);
+            Path path = new Path();
+            path.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
+            canvas.drawTextOnPath(displayName, path, 0, 0, smallTextPaint);
+            canvas.restore();
+
+            Calendar c = Calendar.getInstance(tz);
+            String time = String.format("%02d" , c.get(Calendar.HOUR_OF_DAY))+":"+
+                    String.format("%02d" , c.get(Calendar.MINUTE));
+
             Rect bounds = new Rect();
             int previousColor = largeTextPaint.getColor();
-            largeTextPaint.getTextBounds(timezoneID, 0, timezoneID.length(), bounds);
+            largeTextPaint.getTextBounds(time, 0, time.length(), bounds);
             largeTextPaint.setColor(whiteFillPaint.getColor());
-            canvas.drawText(timezoneID, CX, CY + bounds.height() / 2, largeTextPaint);
+            canvas.drawText(time, CX, CY + bounds.height() / 2, largeTextPaint);
             largeTextPaint.setColor(previousColor);
         }
 
@@ -1139,24 +1158,61 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void updateBackground() {
-            bg.recycle();
-            if(!mAmbient) {
-                if(NIGHT_MODE == NIGHT_MODE_ON) {
-                    if(mIsRound) bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_night);
-                    else bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_night);
-                }else {
-                    if(mIsRound) bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
-                    else bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square);
+            if(bg!=null && !bg.isRecycled()) bg.recycle();
+            if(ScreenUtils.getScreenWidth(getApplicationContext()) <= 320) {
+                if (!mAmbient) {
+                    if (NIGHT_MODE == NIGHT_MODE_ON) {
+                        if (mIsRound)
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_night_320);
+                        else
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_night_320);
+                    } else {
+                        if (mIsRound)
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_320);
+                        else
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_320);
+                    }
+                } else {
+                    if (NIGHT_MODE == NIGHT_MODE_ON) {
+                        if (mIsRound)
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient_night_320);
+                        else
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_night_ambient_320);
+                    } else {
+                        if (mIsRound)
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient_320);
+                        else
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_ambient_320);
+                    }
                 }
             }else {
-                if(NIGHT_MODE == NIGHT_MODE_ON) {
-                    if(mIsRound) bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient_night);
-                    else bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_night_ambient);
-                }else {
-                    if(mIsRound) bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient);
-                    else bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_ambient);
+                if (!mAmbient) {
+                    if (NIGHT_MODE == NIGHT_MODE_ON) {
+                        if (mIsRound)
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_night);
+                        else
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_night);
+                    } else {
+                        if (mIsRound)
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background);
+                        else
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square);
+                    }
+                } else {
+                    if (NIGHT_MODE == NIGHT_MODE_ON) {
+                        if (mIsRound)
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient_night);
+                        else
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_night_ambient);
+                    } else {
+                        if (mIsRound)
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_ambient);
+                        else
+                            bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_ambient);
+                    }
                 }
             }
+            //TODO handle small res devices
             updatePaintColors();
         }
 
