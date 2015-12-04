@@ -90,6 +90,7 @@ public class F35Face extends CanvasWatchFaceService {
     private static final int MONTH_AND_YEAR = 4;
     private static final int MOON = 5;
     private static final int WEAR_BATTERY = 6;
+    private static final int SECONDARY_TIMEZONE = 7;
 
     private static final int NIGHT_MODE_ON = 0;
     private static final int NIGHT_MODE_OFF = 1;
@@ -118,7 +119,7 @@ public class F35Face extends CanvasWatchFaceService {
         Paint mSecondsCirclePaint,mDarkSecondsCirclePaint, smallTextPaint;
         Paint logoTextPaint;
         Paint blackFillPaint, whiteFillPaint, darkGrayFillPaint;
-        Paint accentFillPaint, chronoPaint;
+        Paint accentFillPaint, chronoPaint, secondTimezoneStrokePaint;
         Paint complicationArcAccentPaint,complicationArcBatteryPaint;
         Paint largeTextPaint, mediumTextPaint, normalTextPaint;
         boolean mAmbient;
@@ -255,6 +256,12 @@ public class F35Face extends CanvasWatchFaceService {
             accentFillPaint.setAntiAlias(true);
             accentFillPaint.setTextAlign(Paint.Align.CENTER);
             accentFillPaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 1.5f));
+
+            secondTimezoneStrokePaint= new Paint();
+            secondTimezoneStrokePaint.setAntiAlias(true);
+            secondTimezoneStrokePaint.setTextAlign(Paint.Align.CENTER);
+            secondTimezoneStrokePaint.setStrokeWidth(ScreenUtils.convertDpToPixels(getApplicationContext(), 3f));
+            secondTimezoneStrokePaint.setStrokeCap(Paint.Cap.ROUND);
 
             chronoPaint= new Paint();
             chronoPaint.setAntiAlias(true);
@@ -462,11 +469,6 @@ public class F35Face extends CanvasWatchFaceService {
             float LX = width*0.3530f;
             float LY = height*0.6220f;
 
-            if(true) {
-                drawSecondTimezone(canvas, width, height, LX, LY);
-                return;
-            }
-
             if(LEFT_COMPLICATION_MODE == CHRONO
                     || RIGHT_COMPLICATION_MODE == CHRONO) {
                 String text = "START";
@@ -485,6 +487,8 @@ public class F35Face extends CanvasWatchFaceService {
                 drawMonthAndYear(canvas, width, height, LX, LY);
             }else if(LEFT_COMPLICATION_MODE == WEAR_BATTERY) {
                 drawBatteryWear(canvas, width, height, LX, LY);
+            }else if(LEFT_COMPLICATION_MODE == SECONDARY_TIMEZONE) {
+                drawSecondTimezone(canvas, width, height, LX, LY);
             }
         }
 
@@ -511,6 +515,8 @@ public class F35Face extends CanvasWatchFaceService {
                 drawMonthAndYear(canvas, width, height, RX, RY);
             }else if(RIGHT_COMPLICATION_MODE == WEAR_BATTERY) {
                 drawBatteryWear(canvas, width, height, RX, RY);
+            }else if(RIGHT_COMPLICATION_MODE == SECONDARY_TIMEZONE) {
+                drawSecondTimezone(canvas, width, height, RX, RY);
             }
         }
 
@@ -645,18 +651,20 @@ public class F35Face extends CanvasWatchFaceService {
 
         private void drawSecondTimezone(Canvas canvas, int width, int height, float CX, float CY) {
 
-            String timezoneID = secondTimezoneId==null?"--":secondTimezoneId;
+            String timezoneID = secondTimezoneId==null?"GMT":secondTimezoneId;
 
             TimeZone tz = TimeZone.getTimeZone(timezoneID);
             if(tz == null) tz = TimeZone.getDefault();
-
-            String displayName = tz.getDisplayName(false, TimeZone.SHORT, Locale.getDefault());
+            Calendar tzCalendar = Calendar.getInstance(tz);
+            /* DIGITAL
+            String displayName = tz.getDisplayName(false, TimeZone.LONG, Locale.getDefault());
             canvas.save();
             canvas.rotate(90, CX, CY);
             Path path = new Path();
             path.addCircle(CX, CY, CR * 0.7f, Path.Direction.CW);
             canvas.drawTextOnPath(displayName, path, 0, 0, smallTextPaint);
             canvas.restore();
+
 
             Calendar c = Calendar.getInstance(tz);
             String time = String.format("%02d" , c.get(Calendar.HOUR_OF_DAY))+":"+
@@ -668,6 +676,40 @@ public class F35Face extends CanvasWatchFaceService {
             largeTextPaint.setColor(whiteFillPaint.getColor());
             canvas.drawText(time, CX, CY + bounds.height() / 2, largeTextPaint);
             largeTextPaint.setColor(previousColor);
+            */
+
+            //ANALOG
+            final float minutesRotation = tzCalendar.get(Calendar.MINUTE) * 6f;
+
+            final float hourHandOffset = tzCalendar.get(Calendar.MINUTE) / 2f;
+            final float hoursRotation = (tzCalendar.get(Calendar.HOUR) * 30) + hourHandOffset;
+
+            //int RR = ScreenUtils.convertDpToPixels(getApplicationContext(), 3);
+            int RRradius = (int)((width/2f)/120);
+            if(RRradius <= 0)RRradius =1;
+
+            //Minutes hand
+            canvas.save();
+            canvas.rotate(minutesRotation, CX, CY);
+            canvas.drawLine(CX, CY, CX, CY-CR*0.8F, secondTimezoneStrokePaint);
+            canvas.restore();
+            //END Minutes hands
+
+            //Hours hand
+            canvas.save();
+            canvas.rotate(hoursRotation, CX, CY);
+            canvas.drawLine(CX, CY, CX, CY-CR*0.6F, secondTimezoneStrokePaint);
+            canvas.restore();
+
+            canvas.drawCircle(CX,CY,RRradius,blackFillPaint);
+
+            //draw ticks
+            for(int i=0; i<360; i+=18) {
+                canvas.save();
+                canvas.rotate(i, CX, CY);
+                canvas.drawLine(CX,CY-CR*0.85f,CX,CY-CR*0.95f,smallTextPaint);
+                canvas.restore();
+            }
         }
 
         private void drawMoonPhase(Canvas canvas, int W, int H, float CX, float CY) {
@@ -1159,6 +1201,7 @@ public class F35Face extends CanvasWatchFaceService {
 
         private void updateBackground() {
             if(bg!=null && !bg.isRecycled()) bg.recycle();
+            //LOW RES WATCHES <=320px
             if(ScreenUtils.getScreenWidth(getApplicationContext()) <= 320) {
                 if (!mAmbient) {
                     if (NIGHT_MODE == NIGHT_MODE_ON) {
@@ -1185,7 +1228,9 @@ public class F35Face extends CanvasWatchFaceService {
                             bg = BitmapFactory.decodeResource(getResources(), R.drawable.background_square_ambient_320);
                     }
                 }
-            }else {
+            }
+            //HIGHER RES WATCHES >= 320px
+            else {
                 if (!mAmbient) {
                     if (NIGHT_MODE == NIGHT_MODE_ON) {
                         if (mIsRound)
@@ -1212,7 +1257,7 @@ public class F35Face extends CanvasWatchFaceService {
                     }
                 }
             }
-            //TODO handle small res devices
+
             updatePaintColors();
         }
 
@@ -1224,6 +1269,7 @@ public class F35Face extends CanvasWatchFaceService {
                 }else {
                     accentFillPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 }
+                secondTimezoneStrokePaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 chronoPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 complicationArcAccentPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
                 complicationArcBatteryPaint.setColor(GradientsUtils.getGradients(getApplicationContext(), selectedColorCode));
@@ -1241,6 +1287,7 @@ public class F35Face extends CanvasWatchFaceService {
                 //accent
                 int nightColor = getResources().getColor(R.color.night_mode);
                 accentFillPaint.setColor(Color.DKGRAY);
+                secondTimezoneStrokePaint.setColor(nightColor);
                 chronoPaint.setColor(nightColor);
                 complicationArcAccentPaint.setColor(Color.DKGRAY);
                 complicationArcBatteryPaint.setColor(Color.DKGRAY);
@@ -1280,7 +1327,8 @@ public class F35Face extends CanvasWatchFaceService {
             else if(RIGHT_COMPLICATION_MODE == COORDINATES) RIGHT_COMPLICATION_MODE =MONTH_AND_DAY;
             else if(RIGHT_COMPLICATION_MODE == MONTH_AND_DAY) RIGHT_COMPLICATION_MODE =MONTH_AND_YEAR;
             else if(RIGHT_COMPLICATION_MODE == MONTH_AND_YEAR) RIGHT_COMPLICATION_MODE =WEAR_BATTERY;
-            else if(RIGHT_COMPLICATION_MODE == WEAR_BATTERY) RIGHT_COMPLICATION_MODE =MOON;
+            else if(RIGHT_COMPLICATION_MODE == WEAR_BATTERY) RIGHT_COMPLICATION_MODE =SECONDARY_TIMEZONE;
+            else if(RIGHT_COMPLICATION_MODE == SECONDARY_TIMEZONE) RIGHT_COMPLICATION_MODE =MOON;
         }
 
         private void handleTouchLeftBottom() {
@@ -1289,7 +1337,8 @@ public class F35Face extends CanvasWatchFaceService {
             else if(LEFT_COMPLICATION_MODE == COORDINATES) LEFT_COMPLICATION_MODE =MONTH_AND_DAY;
             else if(LEFT_COMPLICATION_MODE == MONTH_AND_DAY) LEFT_COMPLICATION_MODE =MONTH_AND_YEAR;
             else if(LEFT_COMPLICATION_MODE == MONTH_AND_YEAR) LEFT_COMPLICATION_MODE =WEAR_BATTERY;
-            else if(LEFT_COMPLICATION_MODE == WEAR_BATTERY) LEFT_COMPLICATION_MODE =CHRONO;
+            else if(LEFT_COMPLICATION_MODE == WEAR_BATTERY) LEFT_COMPLICATION_MODE =SECONDARY_TIMEZONE;
+            else if(LEFT_COMPLICATION_MODE == SECONDARY_TIMEZONE) LEFT_COMPLICATION_MODE =CHRONO;
             else if(LEFT_COMPLICATION_MODE == CHRONO) {
 
                 String chrono;
