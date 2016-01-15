@@ -1190,6 +1190,15 @@ public class F35Face extends CanvasWatchFaceService {
         }
 
         private void handleTouchOther() {
+
+            if(RIGHT_COMPLICATION_MODE == CHRONO || LEFT_COMPLICATION_MODE == CHRONO) {
+                stopWatch.stop();
+                INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
+                LEFT_COMPLICATION_MODE =MOON;
+                updateTimer();
+                return;
+            }
+
             if(NIGHT_MODE == NIGHT_MODE_ON) {
                 NIGHT_MODE = NIGHT_MODE_OFF;
 
@@ -1318,8 +1327,8 @@ public class F35Face extends CanvasWatchFaceService {
         private void handleTouchRightBottom() {
             if(RIGHT_COMPLICATION_MODE == CHRONO || LEFT_COMPLICATION_MODE == CHRONO) {
                     stopWatch.stop();
-                    INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
-                    LEFT_COMPLICATION_MODE =MOON;
+                    //INTERACTIVE_UPDATE_RATE_MS = INTERACTIVE_UPDATE_RATE_MS_NORMAL;
+                    //LEFT_COMPLICATION_MODE =MOON;
                     updateTimer();
             }
             else if(RIGHT_COMPLICATION_MODE == MOON) RIGHT_COMPLICATION_MODE =WEEK_DAYS_BATTERY;
