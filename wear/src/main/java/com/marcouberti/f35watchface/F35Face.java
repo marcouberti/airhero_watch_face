@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -43,6 +44,7 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableStatusCodes;
+import com.marcouberti.f35watchface.utils.SharedPreferencesHelper;
 import com.marcouberti.f35watchface.utils.moonphase.MoonPhase;
 import com.marcouberti.f35watchface.utils.ScreenUtils;
 import com.marcouberti.f35watchface.utils.moonphase.StarDate;
@@ -63,6 +65,9 @@ import java.util.TimeZone;
 public class F35Face extends CanvasWatchFaceService {
 
     private static final String TAG = "NatureGradientsFace";
+    private static final String LEFT_COMPLICATION_STATE = "LEFT_COMPLICATION_STATE";
+    private static final String RIGHT_COMPLICATION_STATE = "RIGHT_COMPLICATION_STATE";
+    private static final String ACCENT_COLOR_STATE = "ACCENT_COLOR_STATE";
 
     private static final String F35_WEARABLE_CAPABILITY_NAME = "f35_wearable_capability";
     private static final String LAST_KNOW_GPS_POSITION = "/gps_position";
@@ -309,6 +314,8 @@ public class F35Face extends CanvasWatchFaceService {
 
             updatePaintColors();
             updateBackground();
+
+            restoreComplicationsState();
         }
 
         @Override
@@ -1091,6 +1098,7 @@ public class F35Face extends CanvasWatchFaceService {
             selectedColorCode = color;
 
             updatePaintColors();
+            saveComplicationsState();
         }
 
         @Override  // GoogleApiClient.ConnectionCallbacks
@@ -1174,6 +1182,7 @@ public class F35Face extends CanvasWatchFaceService {
             if(x <(LX + DELTA_X) && x >(LX - DELTA_X)) {
                 if(y >(LY -DELTA_Y) && y <(LY +DELTA_Y)) {
                     handleTouchLeftBottom();
+                    saveComplicationsState();
                     return;
                 }
             }
@@ -1181,12 +1190,12 @@ public class F35Face extends CanvasWatchFaceService {
             if(x <(RX + DELTA_X) && x >(RX- DELTA_X)) {
                 if(y >(RY -DELTA_Y) && y <(RY +DELTA_Y)) {
                     handleTouchRightBottom();
+                    saveComplicationsState();
                     return;
                 }
             }
 
             handleTouchOther();
-
         }
 
         private void handleTouchOther() {
@@ -1380,6 +1389,18 @@ public class F35Face extends CanvasWatchFaceService {
             }
         }
 
+    }
+
+    private void restoreComplicationsState() {
+        LEFT_COMPLICATION_MODE = SharedPreferencesHelper.get(getApplicationContext(),LEFT_COMPLICATION_STATE,MOON);
+        RIGHT_COMPLICATION_MODE = SharedPreferencesHelper.get(getApplicationContext(),RIGHT_COMPLICATION_STATE,WEEK_DAYS_BATTERY);
+        selectedColorCode = SharedPreferencesHelper.get(getApplicationContext(),ACCENT_COLOR_STATE,GradientsUtils.getGradients(getApplicationContext(), -1));
+    }
+
+    private void saveComplicationsState() {
+        SharedPreferencesHelper.save(getApplicationContext(),LEFT_COMPLICATION_STATE,LEFT_COMPLICATION_MODE);
+        SharedPreferencesHelper.save(getApplicationContext(),RIGHT_COMPLICATION_STATE,RIGHT_COMPLICATION_MODE);
+        SharedPreferencesHelper.save(getApplicationContext(),ACCENT_COLOR_STATE,selectedColorCode);
     }
 
     private static class EngineHandler extends Handler {
