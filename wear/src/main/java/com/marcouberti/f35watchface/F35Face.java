@@ -68,6 +68,7 @@ public class F35Face extends CanvasWatchFaceService {
     private static final String LEFT_COMPLICATION_STATE = "LEFT_COMPLICATION_STATE";
     private static final String RIGHT_COMPLICATION_STATE = "RIGHT_COMPLICATION_STATE";
     private static final String ACCENT_COLOR_STATE = "ACCENT_COLOR_STATE";
+    private static final String SECOND_TIMEZONE_STATE = "SECOND_TIMEZONE_STATE";
 
     private static final String F35_WEARABLE_CAPABILITY_NAME = "f35_wearable_capability";
     private static final String LAST_KNOW_GPS_POSITION = "/gps_position";
@@ -1395,12 +1396,16 @@ public class F35Face extends CanvasWatchFaceService {
         LEFT_COMPLICATION_MODE = SharedPreferencesHelper.get(getApplicationContext(),LEFT_COMPLICATION_STATE,MOON);
         RIGHT_COMPLICATION_MODE = SharedPreferencesHelper.get(getApplicationContext(),RIGHT_COMPLICATION_STATE,WEEK_DAYS_BATTERY);
         selectedColorCode = SharedPreferencesHelper.get(getApplicationContext(),ACCENT_COLOR_STATE,GradientsUtils.getGradients(getApplicationContext(), -1));
+        secondTimezoneId = SharedPreferencesHelper.get(getApplicationContext(),SECOND_TIMEZONE_STATE,null);
     }
 
     private void saveComplicationsState() {
         SharedPreferencesHelper.save(getApplicationContext(),LEFT_COMPLICATION_STATE,LEFT_COMPLICATION_MODE);
         SharedPreferencesHelper.save(getApplicationContext(),RIGHT_COMPLICATION_STATE,RIGHT_COMPLICATION_MODE);
         SharedPreferencesHelper.save(getApplicationContext(),ACCENT_COLOR_STATE,selectedColorCode);
+        if(secondTimezoneId != null) {
+            SharedPreferencesHelper.save(getApplicationContext(), SECOND_TIMEZONE_STATE, secondTimezoneId);
+        }
     }
 
     private static class EngineHandler extends Handler {
