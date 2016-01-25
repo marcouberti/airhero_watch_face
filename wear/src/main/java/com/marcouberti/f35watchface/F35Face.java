@@ -1087,6 +1087,7 @@ public class F35Face extends CanvasWatchFaceService {
         private boolean updateUiForKey(String configKey, String value) {
             if (configKey.equals(WatchFaceUtil.KEY_SECOND_TIMEZONE)) {
                 secondTimezoneId = value;
+                saveComplicationsState();
             } else {
                 Log.w(TAG, "Ignoring unknown config key: " + configKey);
                 return false;
